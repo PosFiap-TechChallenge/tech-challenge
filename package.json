@@ -1,0 +1,64 @@
+{
+  "name": "techchallenge",
+  "version": "1.0.0",
+  "description": "API REST de estudo em Node.js + TypeScript com Express, Prisma, Zod e InversifyJS",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.10.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file=.env src/infrastructure/server/main.ts",
+    "build": "tsup src/infrastructure/server/main.ts --format esm --out-dir dist --clean",
+    "start": "node --env-file=.env dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "prisma:generate": "prisma generate --schema src/infrastructure/database/prisma/schema.prisma",
+    "migrate": "prisma migrate dev --schema src/infrastructure/database/prisma/schema.prisma",
+    "migrate:deploy": "prisma migrate deploy --schema src/infrastructure/database/prisma/schema.prisma",
+    "studio": "prisma studio --schema src/infrastructure/database/prisma/schema.prisma",
+    "docker:up": "docker compose up -d --build --wait",
+    "docker:down": "docker compose down --remove-orphans",
+    "docker:clean": "docker compose down -v --remove-orphans"
+  },
+  "prisma": {
+    "schema": "src/infrastructure/database/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^9.1.0",
+    "@prisma/client": "^6.19.3",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "helmet": "^8.3.0",
+    "inversify": "^8.2.3",
+    "prisma": "^6.19.3",
+    "reflect-metadata": "^0.2.2",
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@tsconfig/node22": "^22.0.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.0",
+    "@types/supertest": "^7.2.1",
+    "@types/swagger-ui-express": "^4.1.8",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "prettier": "^3.9.8",
+    "supertest": "^7.2.2",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^4.1.11"
+  }
+}

@@ -5,6 +5,7 @@ import { TYPES } from '../../application/dto/Types.ts';
 import { createPrismaClient } from '../database/PrismaClient.ts';
 import { env } from '../env/Env.ts';
 import { configureControllers } from './Controllers.ts';
+import { configureProviders } from './Providers.ts';
 import { configureRepositories } from './Repositories.ts';
 import { configureUseCases } from './UseCases.ts';
 
@@ -32,6 +33,7 @@ container
   .toDynamicValue(() => createPrismaClient(env.DATABASE_URL))
   .inSingletonScope();
 
+configureProviders(container);
 configureRepositories(container);
 configureUseCases(container);
 configureControllers(container);

@@ -5,8 +5,9 @@ import type { Container } from 'inversify';
 import swaggerUi from 'swagger-ui-express';
 import { TYPES } from '../../application/dto/Types.ts';
 import { env } from '../env/Env.ts';
-import type { HealthController } from '../http/controllers/HealthController.ts';
+import type { AuthMiddleware } from '../http/middlewares/AuthMiddleware.ts';
 import { errorHandler } from '../http/middlewares/errorHandler.ts';
+import { registerControllers } from '../http/routing/registerControllers.ts';
 import { buildOpenApiDocument } from './swagger.ts';
 
 export function createApp(container: Container): Express {
@@ -29,7 +30,9 @@ export function createApp(container: Container): Express {
 
   const router = Router();
 
-  container.get<HealthController>(TYPES.HealthController).register(router);
+  registerControllers(router, container.getAll<object>(TYPES.Controller), {
+    authMiddleware: container.get<AuthMiddleware>(TYPES.AuthMiddleware),
+  });
 
   app.use(router);
 

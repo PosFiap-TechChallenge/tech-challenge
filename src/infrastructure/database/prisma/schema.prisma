@@ -7,12 +7,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Model de exemplo — existe apenas para que a primeira migration tenha conteudo.
-/// Substitua por models reais conforme o dominio for modelado.
-model Example {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
+/// Papeis dos usuarios internos da oficina.
+enum UserRole {
+  ADMIN
+  ATTENDANT
+  MECHANIC
 
-  @@map("examples")
+  @@map("user_role")
+}
+
+/// Usuario interno que acessa a API autenticado via JWT.
+model User {
+  id           String   @id @db.Uuid
+  name         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(254)
+  passwordHash String   @map("password_hash")
+  role         UserRole
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
 }

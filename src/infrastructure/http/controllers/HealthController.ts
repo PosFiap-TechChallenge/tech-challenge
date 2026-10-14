@@ -1,7 +1,8 @@
-import type { Request, Response, Router } from 'express';
+import type { Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../../application/dto/Types.ts';
 import type { GetHealthUseCase } from '../../../application/use-cases/GetHealthUseCase.ts';
+import { Route } from '../routing/Route.ts';
 
 @injectable()
 export class HealthController {
@@ -10,13 +11,10 @@ export class HealthController {
     private readonly getHealthUseCase: GetHealthUseCase,
   ) {}
 
-  register(router: Router): void {
-    router.get('/health', this.handle);
-  }
-
-  private readonly handle = (_req: Request, res: Response): void => {
+  @Route('get', '/health')
+  health(_req: Request, res: Response): void {
     const health = this.getHealthUseCase.execute();
 
     res.status(200).json(health);
-  };
+  }
 }

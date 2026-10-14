@@ -1,7 +1,8 @@
 import type { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
 import { ZodError, z } from 'zod';
 import { logger } from '../../logger/Logger.ts';
-import { AppError } from '../errors/AppError.ts';
+import { AppError } from '../../../application/exceptions/AppError.ts';
+import { DomainError } from '../../../domain/errors/DomainError.ts';
 
 export function errorHandler(): ErrorRequestHandler {
   return (error: unknown, req: Request, res: Response, next: NextFunction): void => {
@@ -24,6 +25,17 @@ export function errorHandler(): ErrorRequestHandler {
           details: z.treeifyError(error),
         },
       });
+      return;
+    }
+
+    if (error instanceof DomainError) {
+      logger.warn('regra de dominio violada', {
+        method: req.method,
+        path: req.originalUrl,
+        code: error.code,
+      });
+
+      res.status(422).json({ error: { code: error.code, message: error.message } });
       return;
     }
 

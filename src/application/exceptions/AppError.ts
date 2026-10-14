@@ -31,3 +31,27 @@ export class BadRequestError extends AppError {
     super(message, 'BAD_REQUEST', 400, details);
   }
 }
+
+export class UnauthorizedError extends AppError {
+  constructor(message = 'Nao autenticado', code = 'UNAUTHORIZED') {
+    super(message, code, 401);
+  }
+}
+
+export class InvalidCredentialsError extends UnauthorizedError {
+  constructor() {
+    super('E-mail ou senha invalidos', 'INVALID_CREDENTIALS');
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message = 'Acesso negado') {
+    super(message, 'FORBIDDEN', 403);
+  }
+}
+
+export class ConflictError extends AppError {
+  constructor(resource: string, field: string) {
+    super(`${resource} com este ${field} ja existe`, 'CONFLICT', 409, { resource, field });
+  }
+}

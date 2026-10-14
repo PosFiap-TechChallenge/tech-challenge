@@ -10,6 +10,10 @@ const envSchema = z.object({
   DB_PASSWORD: z.string().min(1).default('postgres'),
   DB_DATABASE: z.string().min(1).default('techchallenge'),
   CORS_ORIGIN: z.string().min(1).default('*'),
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET deve ter ao menos 32 caracteres'),
+  JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(3600),
+  JWT_ISSUER: z.string().min(1).default('techchallenge-api'),
+  JWT_AUDIENCE: z.string().min(1).default('techchallenge-clients'),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -14,6 +14,7 @@ export default defineConfig({
       DB_PASSWORD: 'postgres',
       DB_DATABASE: 'techchallenge',
       CORS_ORIGIN: '*',
+      JWT_SECRET: 'segredo-de-teste-com-pelo-menos-32-caracteres',
     },
   },
 });

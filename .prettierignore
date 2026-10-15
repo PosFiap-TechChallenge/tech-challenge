@@ -3,3 +3,4 @@ dist
 coverage
 pnpm-lock.yaml
 src/infrastructure/database/prisma/migrations
+plugins

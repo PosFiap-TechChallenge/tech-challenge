@@ -1,12 +1,8 @@
 import type { Container } from 'inversify';
+import { TYPES } from '../../application/dto/Types.ts';
+import type { UserRepository } from '../../domain/repositories/UserRepository.ts';
+import { PrismaUserRepository } from '../database/repositories/PrismaUserRepository.ts';
 
-/**
- * Ponto de extensao para ligar interfaces de repositorio do dominio as suas
- * implementacoes Prisma na infraestrutura.
- *
- * Exemplo:
- * container.bind<ExampleRepository>(TYPES.ExampleRepository)
- *   .to(PrismaExampleRepository)
- *   .inSingletonScope();
- */
-export function configureRepositories(_container: Container): void {}
+export function configureRepositories(container: Container): void {
+  container.bind<UserRepository>(TYPES.UserRepository).to(PrismaUserRepository).inTransientScope();
+}

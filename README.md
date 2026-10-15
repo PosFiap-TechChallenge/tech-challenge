@@ -340,7 +340,10 @@ pnpm docker:up                       # PostgreSQL + API, ambos em container
 # 4. Migrations (cria as tabelas)
 pnpm migrate
 
-# 5. API em modo desenvolvimento (hot reload)
+# 5. Usuario ADMIN inicial (usa ADMIN_NAME/ADMIN_EMAIL/ADMIN_PASSWORD do .env; idempotente)
+pnpm seed:admin
+
+# 6. API em modo desenvolvimento (hot reload)
 pnpm dev
 ```
 
@@ -381,6 +384,7 @@ pnpm start     # node --env-file=.env dist/main.js
 | `prisma:generate` | `prisma generate --schema ...`                                | Gera o Prisma Client                        |
 | `migrate`         | `prisma migrate dev --schema ...`                             | Cria/aplica migration em dev                |
 | `migrate:deploy`  | `prisma migrate deploy --schema ...`                          | Aplica migrations pendentes                 |
+| `seed:admin`      | `tsx --env-file=.env .../seed/seedAdmin.ts`                   | Cria o usuario ADMIN inicial (idempotente)  |
 | `studio`          | `prisma studio --schema ...`                                  | Interface visual do banco                   |
 | `docker:up`       | `docker compose up -d --build --wait`                         | Sobe banco + API e espera ficarem saudáveis |
 | `docker:down`     | `docker compose down --remove-orphans`                        | Derruba os containers                       |
@@ -428,3 +432,48 @@ pnpm docker:up      # sobe tudo e espera ficar saudável
 pnpm docker:down    # derruba, preservando os dados
 pnpm docker:clean   # derruba e apaga o volume
 ```
+
+---
+
+## 10. Autenticação (JWT) e `@Auth`
+
+Usuários internos da oficina (`ADMIN`, `ATTENDANT`, `MECHANIC`) fazem login com e-mail e senha e
+recebem um JWT HS256 assinado com `JWT_SECRET` (biblioteca `jose`). As senhas são guardadas com
+`scrypt` nativo do Node, com salt aleatório por usuário.
+
+| Método | Rota             | Proteção       | Descrição                         |
+| ------ | ---------------- | -------------- | --------------------------------- |
+| POST   | `/auth/sign-in`  | pública        | Retorna `accessToken` e o usuário |
+| POST   | `/auth/register` | `@Auth(ADMIN)` | Cadastra um usuário interno       |
+| GET    | `/auth/me`       | `@Auth()`      | Dados do usuário do token         |
+
+### Protegendo rotas
+
+Controllers declaram rotas com `@Route` e exigem autenticação com `@Auth`. O `registerControllers`
+lê esses metadados e coloca o `AuthMiddleware` na frente do handler.
+
+```ts
+@injectable()
+@Auth(UserRole.ADMIN, UserRole.ATTENDANT) // vale para todas as rotas da classe
+export class CustomerController {
+  @Route('get', '/customers')
+  async list(req: AuthenticatedRequest, res: Response): Promise<void> {
+    // req.auth = { sub, email, role }
+  }
+
+  @Auth(UserRole.ADMIN) // o decorator do método tem precedência sobre o da classe
+  @Route('delete', '/customers/:id')
+  async remove(req: AuthenticatedRequest, res: Response): Promise<void> {}
+}
+```
+
+- `@Auth()` sem argumentos aceita qualquer usuário autenticado.
+- Rotas sem `@Auth` (no método ou na classe) são públicas.
+- Novo controller: ligue-o em `TYPES.Controller` em `infrastructure/di/Controllers.ts`.
+
+| Situação                                               | Resposta            |
+| ------------------------------------------------------ | ------------------- |
+| Header ausente ou esquema diferente de Bearer          | `401 MISSING_TOKEN` |
+| Token adulterado, de outro emissor ou fora do contrato | `401 INVALID_TOKEN` |
+| Token expirado                                         | `401 TOKEN_EXPIRED` |
+| Papel do usuário fora dos permitidos                   | `403 FORBIDDEN`     |

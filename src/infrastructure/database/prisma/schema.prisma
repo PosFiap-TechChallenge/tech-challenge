@@ -29,3 +29,17 @@ model User {
 
   @@map("users")
 }
+
+/// Cliente da oficina, identificado por CPF ou CNPJ (armazenado sem mascara).
+model Customer {
+  id        String   @id @db.Uuid
+  name      String   @db.VarChar(120)
+  document  String   @unique @db.VarChar(14)
+  email     String?  @db.VarChar(254)
+  phone     String?  @db.VarChar(11)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([createdAt])
+  @@map("customers")
+}

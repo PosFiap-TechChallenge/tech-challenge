@@ -3,16 +3,17 @@ import { DomainError } from '../errors/DomainError.ts';
 import { UserCreatedEvent } from '../events/UserCreatedEvent.ts';
 import { makePasswordHasherMock } from '../test/mocks/AuthMocks.ts';
 import { UserRole } from '../value-objects/UserRole.ts';
-import { User, type CreateUserInput, type UserPrimitives } from './User.ts';
+import type { UserData } from '../schemas/UserSchema.ts';
+import { User } from './User.ts';
 
-const validInput: CreateUserInput = {
+const validInput: Parameters<typeof User.create>[0] = {
   name: 'Maria Atendente',
   email: 'Maria@Oficina.com',
   password: 'Oficina123',
   role: UserRole.ATTENDANT,
 };
 
-const primitives: UserPrimitives = {
+const primitives: UserData = {
   id: '0b9d7a4e-8a8f-4c55-a1e5-0f2a5a7b8c9d',
   name: 'Joao Mecanico',
   email: 'joao@oficina.com',
@@ -106,9 +107,11 @@ describe('User', () => {
     });
   });
 
-  describe('normalizeEmail', () => {
+  describe('e-mail', () => {
     it('remove espacos e converte para minusculas', () => {
-      expect(User.normalizeEmail('  Joao.Silva@Oficina.COM ')).toBe('joao.silva@oficina.com');
+      const user = User.from({ ...primitives, email: '  Joao.Silva@Oficina.COM ' });
+
+      expect(user.email).toBe('joao.silva@oficina.com');
     });
 
     it.each([
@@ -118,7 +121,7 @@ describe('User', () => {
       ['com espaco interno', 'joao silva@oficina.com'],
       ['acima de 254 caracteres', `${'a'.repeat(250)}@x.com`],
     ])('rejeita e-mail %s com INVALID_EMAIL', (_case, email) => {
-      expect(() => User.normalizeEmail(email)).toThrow(
+      expect(() => User.from({ ...primitives, email })).toThrow(
         expect.objectContaining({ code: 'INVALID_EMAIL' }),
       );
     });

@@ -1,25 +1,14 @@
-import { z } from '../Zod.ts';
-import {
-  vehicleBrandSchema,
-  vehicleCustomerIdSchema,
-  vehicleModelSchema,
-  vehiclePlateSchema,
-  vehicleYearSchema,
-} from './VehicleFields.ts';
+import { vehicleSchema } from '../../../domain/schemas/VehicleSchema.ts';
+import type { z } from 'zod';
+import '../Zod.ts';
+import { hasAnyField } from './hasAnyField.ts';
 
-export const updateVehicleInputSchema = z
-  .object({
-    plate: vehiclePlateSchema.optional(),
-    brand: vehicleBrandSchema.optional(),
-    model: vehicleModelSchema.optional(),
-    year: vehicleYearSchema.optional(),
-    customerId: vehicleCustomerIdSchema
-      .optional()
-      .openapi({ description: 'Novo proprietario: transfere o veiculo para outro cliente' }),
-  })
-  .refine((input) => Object.values(input).some((value) => value !== undefined), {
-    message: 'Informe ao menos um campo para atualizar',
-  })
-  .openapi('UpdateVehicleInput');
+export const updateVehicleInputSchema = vehicleSchema
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .partial()
+  .refine(hasAnyField, { message: 'Informe ao menos um campo para atualizar' })
+  .openapi('UpdateVehicleInput', {
+    description: 'Campos omitidos nao mudam; customerId transfere o veiculo para outro cliente',
+  });
 
 export type UpdateVehicleInput = z.infer<typeof updateVehicleInputSchema>;

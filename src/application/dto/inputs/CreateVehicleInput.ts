@@ -1,20 +1,9 @@
-import { z } from '../Zod.ts';
-import {
-  vehicleBrandSchema,
-  vehicleCustomerIdSchema,
-  vehicleModelSchema,
-  vehiclePlateSchema,
-  vehicleYearSchema,
-} from './VehicleFields.ts';
+import { vehicleSchema } from '../../../domain/schemas/VehicleSchema.ts';
+import type { z } from 'zod';
+import '../Zod.ts';
 
-export const createVehicleInputSchema = z
-  .object({
-    plate: vehiclePlateSchema,
-    brand: vehicleBrandSchema,
-    model: vehicleModelSchema,
-    year: vehicleYearSchema,
-    customerId: vehicleCustomerIdSchema,
-  })
+export const createVehicleInputSchema = vehicleSchema
+  .omit({ id: true, createdAt: true, updatedAt: true })
   .openapi('CreateVehicleInput');
 
 export type CreateVehicleInput = z.infer<typeof createVehicleInputSchema>;

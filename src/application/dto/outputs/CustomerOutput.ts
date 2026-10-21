@@ -1,16 +1,12 @@
+import { customerSchema } from '../../../domain/schemas/CustomerSchema.ts';
 import { TAX_DOCUMENT_TYPES } from '../../../domain/value-objects/TaxDocument.ts';
 import { z } from '../Zod.ts';
+import { timestampsOutputShape } from './TimestampsOutput.ts';
 
-export const customerOutputSchema = z
-  .object({
-    id: z.uuid(),
-    name: z.string(),
-    document: z.string().openapi({ description: 'CPF ou CNPJ sem mascara' }),
+export const customerOutputSchema = customerSchema
+  .extend({
     documentType: z.enum(TAX_DOCUMENT_TYPES),
-    email: z.email().nullable(),
-    phone: z.string().nullable(),
-    createdAt: z.iso.datetime(),
-    updatedAt: z.iso.datetime(),
+    ...timestampsOutputShape,
   })
   .openapi('CustomerOutput');
 

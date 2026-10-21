@@ -1,3 +1,4 @@
+import { vehicleSchema } from '../../../domain/schemas/VehicleSchema.ts';
 import { z } from '../Zod.ts';
 
 export const VEHICLES_DEFAULT_PAGE_SIZE = 20;
@@ -11,7 +12,9 @@ export const listVehiclesInputSchema = z.object({
     .min(1)
     .max(VEHICLES_MAX_PAGE_SIZE)
     .default(VEHICLES_DEFAULT_PAGE_SIZE),
-  customerId: z.uuid().optional().openapi({ description: 'Filtra os veiculos de um cliente' }),
+  customerId: vehicleSchema.shape.customerId
+    .optional()
+    .openapi({ description: 'Filtra os veiculos de um cliente' }),
 });
 
 export type ListVehiclesInput = z.infer<typeof listVehiclesInputSchema>;

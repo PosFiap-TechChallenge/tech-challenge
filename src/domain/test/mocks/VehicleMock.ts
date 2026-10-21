@@ -1,9 +1,10 @@
-import { Vehicle, type VehiclePrimitives } from '../../aggregates/Vehicle.ts';
+import { Vehicle } from '../../aggregates/Vehicle.ts';
+import type { VehicleData } from '../../schemas/VehicleSchema.ts';
 import { CUSTOMER_ID } from './CustomerMock.ts';
 
 export const VEHICLE_ID = '3d9e8f7a-6b5c-4d4e-8f3a-2b1c0d9e8f7a';
 
-export function makeVehicle(overrides: Partial<VehiclePrimitives> = {}): Vehicle {
+export function makeVehicle(overrides: Partial<VehicleData> = {}): Vehicle {
   return Vehicle.from({
     id: VEHICLE_ID,
     plate: 'ABC1D23',

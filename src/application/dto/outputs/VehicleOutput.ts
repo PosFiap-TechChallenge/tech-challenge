@@ -1,15 +1,10 @@
+import { vehicleSchema } from '../../../domain/schemas/VehicleSchema.ts';
 import { z } from '../Zod.ts';
+import { timestampsOutputShape } from './TimestampsOutput.ts';
 
-export const vehicleOutputSchema = z
-  .object({
-    id: z.uuid(),
-    plate: z.string().openapi({ description: 'Placa em maiusculas e sem hifen' }),
-    brand: z.string(),
-    model: z.string(),
-    year: z.number().int(),
-    customerId: z.uuid(),
-    createdAt: z.iso.datetime(),
-    updatedAt: z.iso.datetime(),
+export const vehicleOutputSchema = vehicleSchema
+  .extend({
+    ...timestampsOutputShape,
   })
   .openapi('VehicleOutput');
 

@@ -1,7 +1,11 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../../application/dto/Types.ts';
-import { ConflictError, NotFoundError } from '../../../application/exceptions/AppError.ts';
+import {
+  AppError,
+  ConflictError,
+  NotFoundError,
+} from '../../../application/exceptions/AppError.ts';
 import type { Customer, CustomerId } from '../../../domain/aggregates/Customer.ts';
 import type {
   CustomerListQuery,
@@ -12,6 +16,7 @@ import type { TaxDocument } from '../../../domain/value-objects/TaxDocument.ts';
 import { CustomerPersistenceMapper } from '../mappers/CustomerPersistenceMapper.ts';
 
 const UNIQUE_CONSTRAINT_VIOLATION = 'P2002';
+const FOREIGN_KEY_VIOLATION = 'P2003';
 const RECORD_NOT_FOUND = 'P2025';
 
 function hasPrismaErrorCode(error: unknown, code: string): boolean {
@@ -21,6 +26,14 @@ function hasPrismaErrorCode(error: unknown, code: string): boolean {
 function translateWriteError(error: unknown): unknown {
   if (hasPrismaErrorCode(error, UNIQUE_CONSTRAINT_VIOLATION)) {
     return new ConflictError('Cliente', 'documento');
+  }
+
+  if (hasPrismaErrorCode(error, FOREIGN_KEY_VIOLATION)) {
+    return new AppError(
+      'Cliente possui veiculos vinculados e nao pode ser removido',
+      'CUSTOMER_HAS_VEHICLES',
+      409,
+    );
   }
 
   if (hasPrismaErrorCode(error, RECORD_NOT_FOUND)) {

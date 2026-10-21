@@ -44,5 +44,13 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Testes
-        run: pnpm test
+      - name: Testes com cobertura (minimo de 80% em domain e application)
+        run: pnpm test:coverage
+
+      - name: Publicar relatorio de cobertura
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30

@@ -27,21 +27,6 @@ Todos os comandos atuam sobre um único agregado: 🟩 **Estoque da Peça** (`Pa
 | Consumo na execução  | 🟪 _Sempre que concluir serviço, consumir peças_           | 🟦 Consumir Peças    | 🟧 Peça consumida               |
 | Alerta de reposição  | 🟪 _Sempre que o saldo for ≤ mínimo_ (após Peça consumida) | —                    | 🟧 Estoque mínimo atingido      |
 
-### 1.2 Linha do tempo
-
-```mermaid
-flowchart LR
-    ADM([🟨 Administrador])
-    ADM --> C1[🟦 Cadastrar Peça] --> E1{{🟧 Estoque inicial registrado}}
-    ADM --> C2[🟦 Registrar Entrada] --> E2{{🟧 Entrada de peça registrada}}
-    ADM --> C3[🟦 Ajustar Estoque] --> E3{{🟧 Ajuste de estoque registrado}}
-
-    OA{{🟧 Orçamento aprovado}} --> P1[/🟪 reservar peças/] --> C4[🟦 Reservar Peças] --> E4{{🟧 Peça reservada}}
-    OC{{🟧 Orçamento cancelado}} --> P2[/🟪 liberar reservas/] --> C5[🟦 Liberar Reservas] --> E5{{🟧 Reserva liberada}}
-    SC{{🟧 Serviço concluído}} --> P3[/🟪 consumir peças/] --> C6[🟦 Consumir Peças] --> E6{{🟧 Peça consumida}}
-    E6 --> P4[/🟪 saldo ≤ mínimo/] --> E7{{🟧 Estoque mínimo atingido}}
-```
-
 Os eventos **Orçamento aprovado**, **Orçamento cancelado** e **Serviço concluído** pertencem ao contexto de
 Ordem de Serviço. Para este contexto eles são gatilhos externos: a Ordem de Serviço chama os casos de
 uso em lote descritos na [seção 5](#5-contrato-com-a-ordem-de-serviço).

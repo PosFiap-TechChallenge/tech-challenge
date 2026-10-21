@@ -32,14 +32,32 @@ model User {
 
 /// Cliente da oficina, identificado por CPF ou CNPJ (armazenado sem mascara).
 model Customer {
-  id        String   @id @db.Uuid
-  name      String   @db.VarChar(120)
-  document  String   @unique @db.VarChar(14)
-  email     String?  @db.VarChar(254)
-  phone     String?  @db.VarChar(11)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id        String    @id @db.Uuid
+  name      String    @db.VarChar(120)
+  document  String    @unique @db.VarChar(14)
+  email     String?   @db.VarChar(254)
+  phone     String?   @db.VarChar(11)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  vehicles  Vehicle[]
 
   @@index([createdAt])
   @@map("customers")
+}
+
+/// Veiculo da oficina, identificado pela placa (armazenada sem mascara) e sempre vinculado a um cliente.
+model Vehicle {
+  id         String   @id @db.Uuid
+  plate      String   @unique @db.VarChar(7)
+  brand      String   @db.VarChar(80)
+  model      String   @db.VarChar(100)
+  year       Int
+  customerId String   @map("customer_id") @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([customerId])
+  @@index([createdAt])
+  @@map("vehicles")
 }

@@ -15,11 +15,23 @@ import {
   customerOutputSchema,
   customerPageOutputSchema,
 } from '../../application/dto/outputs/CustomerOutput.ts';
+import { createVehicleInputSchema } from '../../application/dto/inputs/CreateVehicleInput.ts';
+import { listVehiclesInputSchema } from '../../application/dto/inputs/ListVehiclesInput.ts';
+import { updateVehicleInputSchema } from '../../application/dto/inputs/UpdateVehicleInput.ts';
+import {
+  vehicleIdParamsSchema,
+  vehiclePlateParamsSchema,
+} from '../../application/dto/inputs/VehicleParams.ts';
+import {
+  vehicleOutputSchema,
+  vehiclePageOutputSchema,
+} from '../../application/dto/outputs/VehicleOutput.ts';
 
 type OpenApiDocument = ReturnType<OpenApiGeneratorV3['generateDocument']>;
 
 const BEARER_AUTH = 'bearerAuth';
 const CUSTOMERS_TAG = 'Customers';
+const VEHICLES_TAG = 'Vehicles';
 
 function registerHealthPaths(registry: OpenAPIRegistry): void {
   const healthResponse = registry.register('HealthResponse', healthResponseSchema);
@@ -208,6 +220,121 @@ function registerCustomerPaths(registry: OpenAPIRegistry): void {
       204: { description: 'Cliente removido' },
       400: { description: 'Id invalido' },
       404: { description: 'Cliente nao encontrado' },
+      409: { description: 'Cliente possui veiculos vinculados' },
+    },
+  });
+}
+
+function registerVehiclePaths(registry: OpenAPIRegistry): void {
+  const createVehicleInput = registry.register('CreateVehicleInput', createVehicleInputSchema);
+  const updateVehicleInput = registry.register('UpdateVehicleInput', updateVehicleInputSchema);
+  const vehicleOutput = registry.register('VehicleOutput', vehicleOutputSchema);
+  const vehiclePageOutput = registry.register('VehiclePageOutput', vehiclePageOutputSchema);
+
+  const vehicleResponse = { 'application/json': { schema: vehicleOutput } };
+
+  registry.registerPath({
+    method: 'post',
+    path: '/vehicles',
+    tags: [VEHICLES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Cadastra um veiculo vinculado a um cliente',
+    request: { body: { content: { 'application/json': { schema: createVehicleInput } } } },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN ou ATTENDANT' },
+      201: { description: 'Veiculo cadastrado', content: vehicleResponse },
+      400: { description: 'Payload invalido (inclui placa ou ano invalido)' },
+      404: { description: 'Cliente nao encontrado' },
+      409: { description: 'Placa ja cadastrada' },
+      422: { description: 'Regra de dominio violada' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/vehicles',
+    tags: [VEHICLES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Lista veiculos paginados, do mais recente para o mais antigo',
+    request: { query: listVehiclesInputSchema },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN ou ATTENDANT' },
+      200: {
+        description: 'Pagina de veiculos',
+        content: { 'application/json': { schema: vehiclePageOutput } },
+      },
+      400: { description: 'Parametros de paginacao ou filtro invalidos' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/vehicles/plate/{plate}',
+    tags: [VEHICLES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Identifica o veiculo pela placa',
+    request: { params: vehiclePlateParamsSchema },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN ou ATTENDANT' },
+      200: { description: 'Veiculo encontrado', content: vehicleResponse },
+      400: { description: 'Placa invalida' },
+      404: { description: 'Veiculo nao encontrado' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/vehicles/{id}',
+    tags: [VEHICLES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Detalha um veiculo',
+    request: { params: vehicleIdParamsSchema },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN ou ATTENDANT' },
+      200: { description: 'Veiculo encontrado', content: vehicleResponse },
+      400: { description: 'Id invalido' },
+      404: { description: 'Veiculo nao encontrado' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'patch',
+    path: '/vehicles/{id}',
+    tags: [VEHICLES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Atualiza parcialmente um veiculo (inclui troca de placa e de proprietario)',
+    request: {
+      params: vehicleIdParamsSchema,
+      body: { content: { 'application/json': { schema: updateVehicleInput } } },
+    },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN ou ATTENDANT' },
+      200: { description: 'Veiculo atualizado', content: vehicleResponse },
+      400: { description: 'Payload invalido ou vazio' },
+      404: { description: 'Veiculo ou novo cliente nao encontrado' },
+      409: { description: 'Placa pertence a outro veiculo' },
+      422: { description: 'Regra de dominio violada' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'delete',
+    path: '/vehicles/{id}',
+    tags: [VEHICLES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Remove um veiculo (somente ADMIN)',
+    request: { params: vehicleIdParamsSchema },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN' },
+      204: { description: 'Veiculo removido' },
+      400: { description: 'Id invalido' },
+      404: { description: 'Veiculo nao encontrado' },
     },
   });
 }
@@ -224,6 +351,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
   registerHealthPaths(registry);
   registerAuthPaths(registry);
   registerCustomerPaths(registry);
+  registerVehiclePaths(registry);
 
   const generator = new OpenApiGeneratorV3(registry.definitions);
 

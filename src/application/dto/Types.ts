@@ -8,11 +8,13 @@ export const TYPES = {
   // Providers
   TokenProvider: Symbol.for('TokenProvider'),
   PasswordHasher: Symbol.for('PasswordHasher'),
+  EventPublisher: Symbol.for('EventPublisher'),
 
   // Repositorios
   UserRepository: Symbol.for('UserRepository'),
   CustomerRepository: Symbol.for('CustomerRepository'),
   VehicleRepository: Symbol.for('VehicleRepository'),
+  PartRepository: Symbol.for('PartRepository'),
 
   // Casos de uso
   GetHealthUseCase: Symbol.for('GetHealthUseCase'),
@@ -31,6 +33,21 @@ export const TYPES = {
   ListVehiclesUseCase: Symbol.for('ListVehiclesUseCase'),
   UpdateVehicleUseCase: Symbol.for('UpdateVehicleUseCase'),
   DeleteVehicleUseCase: Symbol.for('DeleteVehicleUseCase'),
+  CreatePartUseCase: Symbol.for('CreatePartUseCase'),
+  GetPartByIdUseCase: Symbol.for('GetPartByIdUseCase'),
+  ListPartsUseCase: Symbol.for('ListPartsUseCase'),
+  ListStockMovementsUseCase: Symbol.for('ListStockMovementsUseCase'),
+  RegisterStockEntryUseCase: Symbol.for('RegisterStockEntryUseCase'),
+  AdjustStockUseCase: Symbol.for('AdjustStockUseCase'),
+  ReservePartsUseCase: Symbol.for('ReservePartsUseCase'),
+  ConsumePartsUseCase: Symbol.for('ConsumePartsUseCase'),
+  ReleasePartReservationsUseCase: Symbol.for('ReleasePartReservationsUseCase'),
+  UpdatePartUseCase: Symbol.for('UpdatePartUseCase'),
+  DeletePartUseCase: Symbol.for('DeletePartUseCase'),
+  PartCommandRunner: Symbol.for('PartCommandRunner'),
+
+  // Handlers de eventos de dominio (multi-binding: o EventPublisher entrega a todos)
+  DomainEventHandler: Symbol.for('DomainEventHandler'),
 
   // Controllers (multi-binding: todos sao registrados no router pelo app)
   Controller: Symbol.for('Controller'),

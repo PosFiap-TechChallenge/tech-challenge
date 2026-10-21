@@ -3,6 +3,7 @@ import { TYPES } from '../../application/dto/Types.ts';
 import { AuthController } from '../http/controllers/AuthController.ts';
 import { CustomerController } from '../http/controllers/CustomerController.ts';
 import { HealthController } from '../http/controllers/HealthController.ts';
+import { PartController } from '../http/controllers/PartController.ts';
 import { VehicleController } from '../http/controllers/VehicleController.ts';
 
 /**
@@ -14,4 +15,5 @@ export function configureControllers(container: Container): void {
   container.bind<object>(TYPES.Controller).to(AuthController).inSingletonScope();
   container.bind<object>(TYPES.Controller).to(CustomerController).inSingletonScope();
   container.bind<object>(TYPES.Controller).to(VehicleController).inSingletonScope();
+  container.bind<object>(TYPES.Controller).to(PartController).inSingletonScope();
 }

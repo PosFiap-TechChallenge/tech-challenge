@@ -369,26 +369,28 @@ pnpm start     # node --env-file=.env dist/main.js
 
 ## 8. Scripts disponíveis
 
-| Script            | Comando                                                       | Descrição                                   |
-| ----------------- | ------------------------------------------------------------- | ------------------------------------------- |
-| `dev`             | `tsx watch --env-file=.env src/infrastructure/server/main.ts` | Servidor em desenvolvimento com hot reload  |
-| `build`           | `tsup ... --format esm --out-dir dist --clean`                | Bundle ESM de produção em `dist/main.js`    |
-| `start`           | `node --env-file=.env dist/main.js`                           | Executa o bundle gerado                     |
-| `typecheck`       | `tsc --noEmit`                                                | Verificação de tipos sem emitir arquivos    |
-| `lint`            | `eslint .`                                                    | Analisa o código                            |
-| `lint:fix`        | `eslint . --fix`                                              | Corrige automaticamente o que dá            |
-| `format`          | `prettier --write .`                                          | Formata o projeto                           |
-| `format:check`    | `prettier --check .`                                          | Falha se algo estiver fora do formato       |
-| `test`            | `vitest --run`                                                | Roda a suíte de testes uma vez              |
-| `test:watch`      | `vitest`                                                      | Testes em modo watch                        |
-| `prisma:generate` | `prisma generate --schema ...`                                | Gera o Prisma Client                        |
-| `migrate`         | `prisma migrate dev --schema ...`                             | Cria/aplica migration em dev                |
-| `migrate:deploy`  | `prisma migrate deploy --schema ...`                          | Aplica migrations pendentes                 |
-| `seed:admin`      | `tsx --env-file=.env .../seed/seedAdmin.ts`                   | Cria o usuario ADMIN inicial (idempotente)  |
-| `studio`          | `prisma studio --schema ...`                                  | Interface visual do banco                   |
-| `docker:up`       | `docker compose up -d --build --wait`                         | Sobe banco + API e espera ficarem saudáveis |
-| `docker:down`     | `docker compose down --remove-orphans`                        | Derruba os containers                       |
-| `docker:clean`    | `docker compose down -v --remove-orphans`                     | Derruba tudo **e apaga o volume do banco**  |
+| Script             | Comando                                                       | Descrição                                                                                                               |
+| ------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `dev`              | `tsx watch --env-file=.env src/infrastructure/server/main.ts` | Servidor em desenvolvimento com hot reload                                                                              |
+| `build`            | `tsup ... --format esm --out-dir dist --clean`                | Bundle ESM de produção em `dist/main.js`                                                                                |
+| `start`            | `node --env-file=.env dist/main.js`                           | Executa o bundle gerado                                                                                                 |
+| `typecheck`        | `tsc --noEmit`                                                | Verificação de tipos sem emitir arquivos                                                                                |
+| `lint`             | `eslint .`                                                    | Analisa o código                                                                                                        |
+| `lint:fix`         | `eslint . --fix`                                              | Corrige automaticamente o que dá                                                                                        |
+| `format`           | `prettier --write .`                                          | Formata o projeto                                                                                                       |
+| `format:check`     | `prettier --check .`                                          | Falha se algo estiver fora do formato                                                                                   |
+| `test`             | `vitest --run`                                                | Roda a suíte de testes uma vez                                                                                          |
+| `test:watch`       | `vitest`                                                      | Testes em modo watch                                                                                                    |
+| `test:integration` | `vitest --run --config vitest.integration.config.ts`          | Integração contra PostgreSQL real (banco `techchallenge_test`, criado pelas migrations; exige o banco do compose no ar) |
+| `test:coverage`    | `vitest --run --coverage`                                     | Unitários com cobertura de `domain` e `application`; falha abaixo de 80% (relatório em `coverage/index.html`)           |
+| `prisma:generate`  | `prisma generate --schema ...`                                | Gera o Prisma Client                                                                                                    |
+| `migrate`          | `prisma migrate dev --schema ...`                             | Cria/aplica migration em dev                                                                                            |
+| `migrate:deploy`   | `prisma migrate deploy --schema ...`                          | Aplica migrations pendentes                                                                                             |
+| `seed:admin`       | `tsx --env-file=.env .../seed/seedAdmin.ts`                   | Cria o usuario ADMIN inicial (idempotente)                                                                              |
+| `studio`           | `prisma studio --schema ...`                                  | Interface visual do banco                                                                                               |
+| `docker:up`        | `docker compose up -d --build --wait`                         | Sobe banco + API e espera ficarem saudáveis                                                                             |
+| `docker:down`      | `docker compose down --remove-orphans`                        | Derruba os containers                                                                                                   |
+| `docker:clean`     | `docker compose down -v --remove-orphans`                     | Derruba tudo **e apaga o volume do banco**                                                                              |
 
 ---
 

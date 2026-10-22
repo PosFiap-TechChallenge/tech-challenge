@@ -1,5 +1,4 @@
-import { z } from '../Zod.ts';
+import { partSchema } from '../../../domain/schemas/PartSchema.ts';
+import '../Zod.ts';
 
-export const partIdParamsSchema = z.object({
-  id: z.uuid().openapi({ param: { name: 'id', in: 'path' } }),
-});
+export const partIdParamsSchema = partSchema.pick({ id: true });

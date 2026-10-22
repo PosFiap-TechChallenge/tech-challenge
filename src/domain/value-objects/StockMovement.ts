@@ -1,3 +1,5 @@
+import type { StockMovementData } from '../schemas/StockMovementSchema.ts';
+
 export const STOCK_MOVEMENT_TYPES = [
   'INITIAL',
   'ENTRY',
@@ -17,13 +19,4 @@ export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[number];
  * `balanceAfter` e `reservedAfter` guardam o estado da peca logo apos a operacao.
  * Valores na unidade de medida da peca, com ate 3 casas decimais.
  */
-export type StockMovement = {
-  id: string;
-  partId: string;
-  type: StockMovementType;
-  quantity: number;
-  balanceAfter: number;
-  reservedAfter: number;
-  reason: string | null;
-  createdAt: Date;
-};
+export type StockMovement = StockMovementData;

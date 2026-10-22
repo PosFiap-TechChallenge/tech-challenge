@@ -9,9 +9,9 @@ import { StockAdjustedEvent } from '../events/StockAdjustedEvent.ts';
 import { StockEntryRegisteredEvent } from '../events/StockEntryRegisteredEvent.ts';
 import { makePart, PART_ID } from '../test/mocks/PartMock.ts';
 import { QUANTITY_MAX } from '../value-objects/Quantity.ts';
-import { Part } from './Part.ts';
+import { type NewPartData, Part } from './Part.ts';
 
-const validInput = {
+const validInput: NewPartData = {
   code: ' flt-oleo-01 ',
   name: '  Filtro de oleo  ',
   type: 'PART',
@@ -403,11 +403,17 @@ describe('Part', () => {
     });
 
     it.each(['INSUMO', ''])('rejeita tipo invalido: "%s"', (type) => {
-      expectDomainError(() => Part.create({ ...validInput, type }), 'INVALID_PART_TYPE');
+      expectDomainError(
+        () => Part.create({ ...validInput, type: type as never }),
+        'INVALID_PART_TYPE',
+      );
     });
 
     it.each(['LITRO', 'un', ''])('rejeita unidade invalida: "%s"', (unit) => {
-      expectDomainError(() => Part.create({ ...validInput, unit }), 'INVALID_MEASUREMENT_UNIT');
+      expectDomainError(
+        () => Part.create({ ...validInput, unit: unit as never }),
+        'INVALID_MEASUREMENT_UNIT',
+      );
     });
 
     it.each([-0.01, 10.001, Number.POSITIVE_INFINITY])(

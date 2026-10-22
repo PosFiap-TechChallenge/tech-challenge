@@ -8,41 +8,29 @@ import type { StockMovement } from '../../../domain/value-objects/StockMovement.
 
 /**
  * Colunas NUMERIC chegam como `Prisma.Decimal`. O dominio recebe `number` e o
- * revalida com `Quantity`/`Money`, que o convertem para inteiros exatos; na volta,
+ * revalida com o schema da peca e `Quantity`/`Money`, que o convertem para inteiros exatos; na volta,
  * os decimais (no maximo 3 casas) sao representados sem perda pelo `Decimal`.
  */
 export class PartPersistenceMapper {
   static toDomain(record: PartRecord): Part {
     return Part.from({
-      id: record.id,
-      code: record.code,
-      name: record.name,
-      type: record.type,
-      unit: record.unit,
+      ...record,
       unitPrice: record.unitPrice.toNumber(),
       quantity: record.quantity.toNumber(),
       reserved: record.reserved.toNumber(),
       minimumStock: record.minimumStock.toNumber(),
-      version: record.version,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
     });
   }
 
   static toPersistence(part: Part): PartRecord {
+    const data = part.toData();
+
     return {
-      id: part.id,
-      code: part.code,
-      name: part.name,
-      type: part.type,
-      unit: part.unit,
-      unitPrice: new Prisma.Decimal(part.unitPrice),
-      quantity: new Prisma.Decimal(part.quantity),
-      reserved: new Prisma.Decimal(part.reserved),
-      minimumStock: new Prisma.Decimal(part.minimumStock),
-      version: part.version,
-      createdAt: part.createdAt,
-      updatedAt: part.updatedAt,
+      ...data,
+      unitPrice: new Prisma.Decimal(data.unitPrice),
+      quantity: new Prisma.Decimal(data.quantity),
+      reserved: new Prisma.Decimal(data.reserved),
+      minimumStock: new Prisma.Decimal(data.minimumStock),
     };
   }
 

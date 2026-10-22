@@ -7,7 +7,3 @@ export type MeasurementUnit = (typeof MEASUREMENT_UNITS)[number];
 export function isFractionable(unit: MeasurementUnit): boolean {
   return unit !== 'UN';
 }
-
-export function isMeasurementUnit(value: string): value is MeasurementUnit {
-  return (MEASUREMENT_UNITS as readonly string[]).includes(value);
-}

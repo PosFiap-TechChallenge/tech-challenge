@@ -1,3 +1,4 @@
+import type { z } from 'zod';
 import { DomainError } from '../errors/DomainError.ts';
 import { InitialStockRegisteredEvent } from '../events/InitialStockRegisteredEvent.ts';
 import { MinimumStockReachedEvent } from '../events/MinimumStockReachedEvent.ts';
@@ -6,78 +7,61 @@ import { PartReservationReleasedEvent } from '../events/PartReservationReleasedE
 import { PartReservedEvent } from '../events/PartReservedEvent.ts';
 import { StockAdjustedEvent } from '../events/StockAdjustedEvent.ts';
 import { StockEntryRegisteredEvent } from '../events/StockEntryRegisteredEvent.ts';
+import { partSchema, type PartData } from '../schemas/PartSchema.ts';
+import { stockAdjustmentSchema } from '../schemas/StockMovementSchema.ts';
 import { AggregateRoot } from '../shared/AggregateRoot.ts';
 import type { Brand } from '../shared/Brand.ts';
+import { applyChanges, type Changes } from '../shared/Changes.ts';
 import { generateId } from '../shared/Entity.ts';
-import {
-  isFractionable,
-  isMeasurementUnit,
-  type MeasurementUnit,
-} from '../value-objects/MeasurementUnit.ts';
+import { parseSchema } from '../shared/parseSchema.ts';
+import { isFractionable, type MeasurementUnit } from '../value-objects/MeasurementUnit.ts';
 import { Money } from '../value-objects/Money.ts';
-import { isPartType, type PartType } from '../value-objects/PartType.ts';
+import type { PartType } from '../value-objects/PartType.ts';
 import { Quantity, QUANTITY_MAX } from '../value-objects/Quantity.ts';
 import type { StockMovement, StockMovementType } from '../value-objects/StockMovement.ts';
 
 export type PartId = Brand<string, 'PartId'>;
 
-export const PART_CODE_MAX_LENGTH = 40;
-export const PART_NAME_MAX_LENGTH = 120;
-export const PART_ADJUSTMENT_REASON_MAX_LENGTH = 255;
-
 const MAX_BALANCE = Quantity.of(QUANTITY_MAX);
 
-type PartProps = {
-  code: string;
-  name: string;
-  type: PartType;
-  unit: MeasurementUnit;
+type StockFields = 'quantity' | 'reserved' | 'minimumStock';
+
+type PartProps = Omit<PartData, 'id' | 'unitPrice' | StockFields> & {
   unitPrice: Money;
   quantity: Quantity;
   reserved: Quantity;
   minimumStock: Quantity;
-  version: number;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
-/** Forma plana usada na persistencia: quantidades e preco como decimais. */
-export type PartPrimitives = {
-  id: string;
-  code: string;
-  name: string;
-  type: string;
-  unit: string;
-  unitPrice: number;
-  quantity: number;
-  reserved: number;
-  minimumStock: number;
-  version: number;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type NewPartData = {
-  code: string;
-  name: string;
-  type: string;
-  unit: string;
-  unitPrice: number;
-  initialQuantity: number;
-  minimumStock: number;
-};
+/** Dados do cadastro: o estoque inicial vira o saldo fisico. */
+export type NewPartData = Pick<
+  PartData,
+  'code' | 'name' | 'type' | 'unit' | 'unitPrice' | 'minimumStock'
+> & { initialQuantity: number };
 
 /**
- * `undefined` mantem o valor atual. Saldos so mudam pelos comandos de estoque, e a
- * unidade nao muda: o saldo existente seria reinterpretado (ex.: 4 L viraria 4 ML).
+ * Campos editaveis. Saldos so mudam pelos comandos de estoque, e a unidade nao muda:
+ * o saldo existente seria reinterpretado (ex.: 4 L viraria 4 ML).
  */
-export type UpdatePartChanges = {
-  code?: string | undefined;
-  name?: string | undefined;
-  type?: string | undefined;
-  unitPrice?: number | undefined;
-  minimumStock?: number | undefined;
+type EditablePartContent = Pick<PartData, 'code' | 'name' | 'type' | 'unitPrice' | 'minimumStock'>;
+
+const ERROR_CODES = {
+  code: 'INVALID_PART_CODE',
+  name: 'INVALID_PART_TEXT',
+  type: 'INVALID_PART_TYPE',
+  unit: 'INVALID_MEASUREMENT_UNIT',
+  unitPrice: 'INVALID_MONEY',
+  quantity: 'INVALID_QUANTITY',
+  reserved: 'INVALID_QUANTITY',
+  minimumStock: 'INVALID_QUANTITY',
 };
+
+const ADJUSTMENT_ERROR_CODES = {
+  quantity: 'INVALID_QUANTITY',
+  reason: 'INVALID_PART_TEXT',
+};
+
+const STOCK_FIELDS: readonly StockFields[] = ['quantity', 'reserved', 'minimumStock'];
 
 /**
  * Estoque de uma peca ou insumo. `quantity` e o saldo fisico; `reserved` e a parte
@@ -94,34 +78,60 @@ export class Part extends AggregateRoot<PartProps, PartId> {
     super(props, id);
   }
 
-  static create(input: NewPartData): Part {
+  /** Valida o schema e as regras que cruzam campos: fracao em UN e reservado acima do saldo. */
+  private static parse(data: z.input<typeof partSchema>): PartData {
+    const part = parseSchema(partSchema, data, ERROR_CODES, 'INVALID_PART');
+
+    for (const field of STOCK_FIELDS) {
+      Part.requireQuantity(part[field], part.unit, field);
+    }
+
+    if (Quantity.of(part.reserved).isGreaterThan(Quantity.of(part.quantity))) {
+      throw new DomainError(
+        'reserved: Reservado nao pode ser maior que o saldo fisico',
+        'INVALID_QUANTITY',
+      );
+    }
+
+    return part;
+  }
+
+  private static toProps({
+    id: _id,
+    unitPrice,
+    quantity,
+    reserved,
+    minimumStock,
+    ...data
+  }: PartData): PartProps {
+    return {
+      ...data,
+      unitPrice: Money.of(unitPrice),
+      quantity: Quantity.of(quantity),
+      reserved: Quantity.of(reserved),
+      minimumStock: Quantity.of(minimumStock),
+    };
+  }
+
+  static create({ initialQuantity, ...input }: NewPartData): Part {
     const now = new Date();
-    const unit = Part.requireUnit(input.unit);
-    const quantity = Part.requireQuantity(input.initialQuantity, unit, 'Estoque inicial');
 
-    const part = new Part(
-      {
-        code: Part.normalizeCode(input.code),
-        name: Part.requireText(input.name, 'Nome da peca', PART_NAME_MAX_LENGTH),
-        type: Part.requireType(input.type),
-        unit,
-        unitPrice: Money.of(input.unitPrice, 'Preco unitario'),
-        quantity,
-        reserved: Quantity.ZERO,
-        minimumStock: Part.requireQuantity(input.minimumStock, unit, 'Estoque minimo'),
-        version: 0,
-        createdAt: now,
-        updatedAt: now,
-      },
-      generateId<PartId>(),
-    );
+    const part = Part.from({
+      ...input,
+      id: generateId<PartId>(),
+      quantity: initialQuantity,
+      reserved: 0,
+      version: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
 
-    part.recordMovement('INITIAL', quantity.value, null);
+    part.recordMovement('INITIAL', part.quantity, null);
     part.raiseEvent(
       new InitialStockRegisteredEvent({
         partId: part.id,
         code: part.code,
-        quantity: quantity.value,
+        quantity: part.quantity,
         minimumStock: part.minimumStock,
       }),
     );
@@ -129,39 +139,10 @@ export class Part extends AggregateRoot<PartProps, PartId> {
     return part;
   }
 
-  static from(primitives: PartPrimitives): Part {
-    const unit = Part.requireUnit(primitives.unit);
+  static from(data: z.input<typeof partSchema>): Part {
+    const part = Part.parse(data);
 
-    return new Part(
-      {
-        code: Part.normalizeCode(primitives.code),
-        name: primitives.name,
-        type: Part.requireType(primitives.type),
-        unit,
-        unitPrice: Money.of(primitives.unitPrice, 'Preco unitario'),
-        quantity: Quantity.of(primitives.quantity, 'Saldo'),
-        reserved: Quantity.of(primitives.reserved, 'Reservado'),
-        minimumStock: Quantity.of(primitives.minimumStock, 'Estoque minimo'),
-        version: primitives.version,
-        createdAt: primitives.createdAt,
-        updatedAt: primitives.updatedAt,
-      },
-      primitives.id as PartId,
-    );
-  }
-
-  /** Codigo comparavel: sem espacos nas pontas e em maiusculas. */
-  static normalizeCode(raw: string): string {
-    const value = raw.trim().toUpperCase();
-
-    if (!value || value.length > PART_CODE_MAX_LENGTH) {
-      throw new DomainError(
-        `Codigo da peca deve ter entre 1 e ${PART_CODE_MAX_LENGTH} caracteres`,
-        'INVALID_PART_CODE',
-      );
-    }
-
-    return value;
+    return new Part(Part.toProps(part), part.id as PartId);
   }
 
   get code(): string {
@@ -221,6 +202,19 @@ export class Part extends AggregateRoot<PartProps, PartId> {
     return [...this.movements];
   }
 
+  toData(): PartData {
+    const { unitPrice, quantity, reserved, minimumStock, ...data } = this.props;
+
+    return {
+      ...data,
+      id: this.id,
+      unitPrice: unitPrice.value,
+      quantity: quantity.value,
+      reserved: reserved.value,
+      minimumStock: minimumStock.value,
+    };
+  }
+
   registerEntry(quantity: number): void {
     const amount = this.requirePositive(quantity, 'Quantidade da entrada');
     const balanceAfter = this.props.quantity.plus(amount);
@@ -245,16 +239,18 @@ export class Part extends AggregateRoot<PartProps, PartId> {
 
   /** Substitui o saldo fisico pela quantidade contada, sem invadir o que ja esta reservado. */
   adjust(countedQuantity: number, reason: string): void {
+    const adjustment = parseSchema(
+      stockAdjustmentSchema,
+      { quantity: countedQuantity, reason },
+      ADJUSTMENT_ERROR_CODES,
+      'INVALID_STOCK_ADJUSTMENT',
+    );
     const balanceAfter = Part.requireQuantity(
-      countedQuantity,
+      adjustment.quantity,
       this.props.unit,
       'Quantidade ajustada',
     );
-    const justification = Part.requireText(
-      reason,
-      'Motivo do ajuste',
-      PART_ADJUSTMENT_REASON_MAX_LENGTH,
-    );
+    const justification = adjustment.reason;
 
     if (balanceAfter.equals(this.props.quantity)) {
       throw new DomainError(
@@ -351,25 +347,11 @@ export class Part extends AggregateRoot<PartProps, PartId> {
   }
 
   /** Valida todos os campos antes de aplicar: uma falha nao deixa a peca parcialmente alterada. */
-  update(changes: UpdatePartChanges): void {
-    const next: Partial<PartProps> = {
-      code: changes.code === undefined ? this.props.code : Part.normalizeCode(changes.code),
-      name:
-        changes.name === undefined
-          ? this.props.name
-          : Part.requireText(changes.name, 'Nome da peca', PART_NAME_MAX_LENGTH),
-      type: changes.type === undefined ? this.props.type : Part.requireType(changes.type),
-      unitPrice:
-        changes.unitPrice === undefined
-          ? this.props.unitPrice
-          : Money.of(changes.unitPrice, 'Preco unitario'),
-      minimumStock:
-        changes.minimumStock === undefined
-          ? this.props.minimumStock
-          : Part.requireQuantity(changes.minimumStock, this.props.unit, 'Estoque minimo'),
-    };
+  update({ code, name, type, unitPrice, minimumStock }: Changes<EditablePartContent>): void {
+    const editable = { code, name, type, unitPrice, minimumStock };
+    const next = Part.parse({ ...applyChanges(this.toData(), editable), updatedAt: new Date() });
 
-    Object.assign(this.props, next, { updatedAt: new Date() });
+    Object.assign(this.props, Part.toProps(next));
   }
 
   private get availableQuantity(): Quantity {
@@ -427,34 +409,5 @@ export class Part extends AggregateRoot<PartProps, PartId> {
     }
 
     return quantity;
-  }
-
-  private static requireUnit(raw: string): MeasurementUnit {
-    if (!isMeasurementUnit(raw)) {
-      throw new DomainError(`Unidade de medida invalida: ${raw}`, 'INVALID_MEASUREMENT_UNIT');
-    }
-
-    return raw;
-  }
-
-  private static requireType(raw: string): PartType {
-    if (!isPartType(raw)) {
-      throw new DomainError(`Tipo invalido: ${raw}`, 'INVALID_PART_TYPE');
-    }
-
-    return raw;
-  }
-
-  private static requireText(raw: string, label: string, maxLength: number): string {
-    const value = raw.trim();
-
-    if (!value || value.length > maxLength) {
-      throw new DomainError(
-        `${label} deve ter entre 1 e ${maxLength} caracteres`,
-        'INVALID_PART_TEXT',
-      );
-    }
-
-    return value;
   }
 }

@@ -1,12 +1,11 @@
+import { movementQuantitySchema } from '../../../domain/schemas/QuantitySchema.ts';
 import { z } from '../Zod.ts';
-import { partMovementQuantitySchema } from './PartFields.ts';
 
 export const registerStockEntryInputSchema = z
   .object({
-    quantity: partMovementQuantitySchema.openapi({
-      description: 'Quantidade recebida, na unidade da peca, somada ao saldo fisico',
-      example: 5,
-    }),
+    quantity: movementQuantitySchema().describe(
+      'Quantidade recebida, na unidade da peca, somada ao saldo fisico',
+    ),
   })
   .openapi('RegisterStockEntryInput');
 

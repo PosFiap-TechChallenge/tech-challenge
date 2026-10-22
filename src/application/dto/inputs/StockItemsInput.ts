@@ -1,5 +1,6 @@
+import { partSchema } from '../../../domain/schemas/PartSchema.ts';
+import { movementQuantitySchema } from '../../../domain/schemas/QuantitySchema.ts';
 import { z } from '../Zod.ts';
-import { partMovementQuantitySchema } from './PartFields.ts';
 
 export const STOCK_ITEMS_MAX = 100;
 
@@ -9,7 +10,7 @@ export const STOCK_ITEMS_MAX = 100;
  */
 export const stockItemsInputSchema = z.object({
   items: z
-    .array(z.object({ partId: z.uuid(), quantity: partMovementQuantitySchema }))
+    .array(z.object({ partId: partSchema.shape.id, quantity: movementQuantitySchema() }))
     .min(1)
     .max(STOCK_ITEMS_MAX)
     .refine((items) => new Set(items.map((item) => item.partId)).size === items.length, {

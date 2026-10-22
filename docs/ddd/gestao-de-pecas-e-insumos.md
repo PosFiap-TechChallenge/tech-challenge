@@ -84,15 +84,16 @@ como última barreira.
 
 ## 3. Transações e concorrência
 
-| Situação                                      | Tratamento                                                                                                 |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Saldo e movimentação                          | Gravados na mesma transação: nunca existe saldo alterado sem o registro no histórico.                      |
-| Orçamento com várias peças                    | Reserva, liberação e consumo em lote são **tudo ou nada**: se um item falhar, nenhum é gravado.            |
-| Duas operações na mesma peça ao mesmo tempo   | **Lock otimista** por `version`: a segunda escrita é recusada em vez de sobrescrever a primeira.           |
-| Conflito de versão em reserva/entrada/consumo | Retentativa automática (até 5, com espera aleatória). As regras são reavaliadas sobre o saldo novo.        |
-| Conflito de versão em ajuste                  | **Sem retentativa**: a contagem foi feita sobre o saldo antigo, então o administrador deve recontar (409). |
-| Lotes concorrentes                            | Linhas gravadas em ordem de id, para evitar deadlock entre transações.                                     |
-| Eventos de domínio                            | Publicados **depois** do commit. Falha de um handler é registrada e não desfaz a operação.                 |
+| Situação                                        | Tratamento                                                                                                 |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Saldo e movimentação                            | Gravados na mesma transação: nunca existe saldo alterado sem o registro no histórico.                      |
+| Orçamento com várias peças                      | Reserva, liberação e consumo em lote são **tudo ou nada**: se um item falhar, nenhum é gravado.            |
+| Duas operações na mesma peça ao mesmo tempo     | **Lock otimista** por `version`: a segunda escrita é recusada em vez de sobrescrever a primeira.           |
+| Conflito de versão em reserva/entrada/consumo   | Retentativa automática (até 5, com espera aleatória). As regras são reavaliadas sobre o saldo novo.        |
+| Conflito de versão em ajuste                    | **Sem retentativa**: a contagem foi feita sobre o saldo antigo, então o administrador deve recontar (409). |
+| Lotes concorrentes                              | Linhas gravadas em ordem de id, para evitar deadlock entre transações.                                     |
+| Schemas (validação do agregado e base dos DTOs) | `src/domain/schemas/{Part,StockMovement,Quantity,Money}Schema.ts`                                          |
+| Eventos de domínio                              | Publicados **depois** do commit. Falha de um handler é registrada e não desfaz a operação.                 |
 
 ---
 

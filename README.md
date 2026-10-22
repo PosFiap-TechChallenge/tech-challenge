@@ -511,7 +511,7 @@ pnpm test:integration
 ```
 
 - Rodam contra PostgreSQL real (`*.integration.spec.ts`, configurados em `vitest.integration.config.ts`)
-  e ficam fora do `pnpm test` e do CI, porque precisam do banco do compose no ar.
+  e ficam fora do `pnpm test`, porque precisam de um banco no ar (localmente, o do compose).
 - Usam o banco `techchallenge_test` (ou `TEST_DATABASE_URL`), que recebe as migrations antes da suíte.
   Por segurança, a suíte só roda em banco cujo nome termina em `_test`.
 
@@ -524,3 +524,6 @@ Roda em todo pull request e em todo push na `main`:
 3. `pnpm test:coverage`, aplicando o mínimo de 80%.
 4. Publica o relatório de cobertura como artefato `coverage-report` (fica 30 dias na execução),
    que serve de evidência da cobertura exigida na entrega.
+
+Em paralelo, o job `integration` sobe um PostgreSQL 16 como serviço e roda `pnpm test:integration`
+contra o banco `techchallenge_test`.

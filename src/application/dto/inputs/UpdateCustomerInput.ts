@@ -1,27 +1,14 @@
-import { z } from '../Zod.ts';
-import {
-  customerEmailSchema,
-  customerNameSchema,
-  customerPhoneSchema,
-  taxDocumentSchema,
-} from './CustomerFields.ts';
+import { customerSchema } from '../../../domain/schemas/CustomerSchema.ts';
+import type { z } from 'zod';
+import '../Zod.ts';
+import { hasAnyField } from './hasAnyField.ts';
 
-export const updateCustomerInputSchema = z
-  .object({
-    name: customerNameSchema.optional(),
-    document: taxDocumentSchema.optional(),
-    email: customerEmailSchema
-      .nullable()
-      .optional()
-      .openapi({ description: 'null remove o e-mail' }),
-    phone: customerPhoneSchema
-      .nullable()
-      .optional()
-      .openapi({ description: 'null remove o telefone' }),
-  })
-  .refine((input) => Object.values(input).some((value) => value !== undefined), {
-    message: 'Informe ao menos um campo para atualizar',
-  })
-  .openapi('UpdateCustomerInput');
+export const updateCustomerInputSchema = customerSchema
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .partial()
+  .refine(hasAnyField, { message: 'Informe ao menos um campo para atualizar' })
+  .openapi('UpdateCustomerInput', {
+    description: 'Campos omitidos nao mudam; null remove e-mail ou telefone',
+  });
 
 export type UpdateCustomerInput = z.infer<typeof updateCustomerInputSchema>;

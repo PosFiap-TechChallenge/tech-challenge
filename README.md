@@ -1,5 +1,7 @@
 # TechChallenge API
 
+[![CI](https://github.com/PosFiap-TechChallenge/tech-challenge/actions/workflows/ci.yml/badge.svg)](https://github.com/PosFiap-TechChallenge/tech-challenge/actions/workflows/ci.yml)
+
 API REST construída em Node.js + TypeScript, organizada em camadas (DDD / Clean
 Architecture), com injeção de dependência via InversifyJS, persistência com Prisma + PostgreSQL,
 validação com Zod e documentação interativa em Swagger UI.
@@ -369,28 +371,28 @@ pnpm start     # node --env-file=.env dist/main.js
 
 ## 8. Scripts disponíveis
 
-| Script             | Comando                                                       | Descrição                                                                                                               |
-| ------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `dev`              | `tsx watch --env-file=.env src/infrastructure/server/main.ts` | Servidor em desenvolvimento com hot reload                                                                              |
-| `build`            | `tsup ... --format esm --out-dir dist --clean`                | Bundle ESM de produção em `dist/main.js`                                                                                |
-| `start`            | `node --env-file=.env dist/main.js`                           | Executa o bundle gerado                                                                                                 |
-| `typecheck`        | `tsc --noEmit`                                                | Verificação de tipos sem emitir arquivos                                                                                |
-| `lint`             | `eslint .`                                                    | Analisa o código                                                                                                        |
-| `lint:fix`         | `eslint . --fix`                                              | Corrige automaticamente o que dá                                                                                        |
-| `format`           | `prettier --write .`                                          | Formata o projeto                                                                                                       |
-| `format:check`     | `prettier --check .`                                          | Falha se algo estiver fora do formato                                                                                   |
-| `test`             | `vitest --run`                                                | Roda a suíte de testes uma vez                                                                                          |
-| `test:watch`       | `vitest`                                                      | Testes em modo watch                                                                                                    |
-| `test:integration` | `vitest --run --config vitest.integration.config.ts`          | Integração contra PostgreSQL real (banco `techchallenge_test`, criado pelas migrations; exige o banco do compose no ar) |
-| `test:coverage`    | `vitest --run --coverage`                                     | Unitários com cobertura de `domain` e `application`; falha abaixo de 80% (relatório em `coverage/index.html`)           |
-| `prisma:generate`  | `prisma generate --schema ...`                                | Gera o Prisma Client                                                                                                    |
-| `migrate`          | `prisma migrate dev --schema ...`                             | Cria/aplica migration em dev                                                                                            |
-| `migrate:deploy`   | `prisma migrate deploy --schema ...`                          | Aplica migrations pendentes                                                                                             |
-| `seed:admin`       | `tsx --env-file=.env .../seed/seedAdmin.ts`                   | Cria o usuario ADMIN inicial (idempotente)                                                                              |
-| `studio`           | `prisma studio --schema ...`                                  | Interface visual do banco                                                                                               |
-| `docker:up`        | `docker compose up -d --build --wait`                         | Sobe banco + API e espera ficarem saudáveis                                                                             |
-| `docker:down`      | `docker compose down --remove-orphans`                        | Derruba os containers                                                                                                   |
-| `docker:clean`     | `docker compose down -v --remove-orphans`                     | Derruba tudo **e apaga o volume do banco**                                                                              |
+| Script             | Comando                                                       | Descrição                                                                                                |
+| ------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `dev`              | `tsx watch --env-file=.env src/infrastructure/server/main.ts` | Servidor em desenvolvimento com hot reload                                                               |
+| `build`            | `tsup ... --format esm --out-dir dist --clean`                | Bundle ESM de produção em `dist/main.js`                                                                 |
+| `start`            | `node --env-file=.env dist/main.js`                           | Executa o bundle gerado                                                                                  |
+| `typecheck`        | `tsc --noEmit`                                                | Verificação de tipos sem emitir arquivos                                                                 |
+| `lint`             | `eslint .`                                                    | Analisa o código                                                                                         |
+| `lint:fix`         | `eslint . --fix`                                              | Corrige automaticamente o que dá                                                                         |
+| `format`           | `prettier --write .`                                          | Formata o projeto                                                                                        |
+| `format:check`     | `prettier --check .`                                          | Falha se algo estiver fora do formato                                                                    |
+| `test`             | `vitest --run`                                                | Roda a suíte de testes uma vez                                                                           |
+| `test:coverage`    | `vitest --run --coverage`                                     | Testes + cobertura; falha abaixo de 80% em domain/application                                            |
+| `test:integration` | `vitest --run --config vitest.integration.config.ts`          | Testes de integração contra PostgreSQL real (banco `techchallenge_test`; exige o banco do compose no ar) |
+| `test:watch`       | `vitest`                                                      | Testes em modo watch                                                                                     |
+| `prisma:generate`  | `prisma generate --schema ...`                                | Gera o Prisma Client                                                                                     |
+| `migrate`          | `prisma migrate dev --schema ...`                             | Cria/aplica migration em dev                                                                             |
+| `migrate:deploy`   | `prisma migrate deploy --schema ...`                          | Aplica migrations pendentes                                                                              |
+| `seed:admin`       | `tsx --env-file=.env .../seed/seedAdmin.ts`                   | Cria o usuario ADMIN inicial (idempotente)                                                               |
+| `studio`           | `prisma studio --schema ...`                                  | Interface visual do banco                                                                                |
+| `docker:up`        | `docker compose up -d --build --wait`                         | Sobe banco + API e espera ficarem saudáveis                                                              |
+| `docker:down`      | `docker compose down --remove-orphans`                        | Derruba os containers                                                                                    |
+| `docker:clean`     | `docker compose down -v --remove-orphans`                     | Derruba tudo **e apaga o volume do banco**                                                               |
 
 ---
 
@@ -479,3 +481,46 @@ export class CustomerController {
 | Token adulterado, de outro emissor ou fora do contrato | `401 INVALID_TOKEN` |
 | Token expirado                                         | `401 TOKEN_EXPIRED` |
 | Papel do usuário fora dos permitidos                   | `403 FORBIDDEN`     |
+
+---
+
+## 11. Testes e cobertura
+
+O desafio exige testes automatizados com **cobertura mínima de 80% nos domínios críticos**. Essa
+regra é aplicada automaticamente no CI.
+
+### Cobertura de testes
+
+```bash
+pnpm test:coverage
+```
+
+- Usa o provider V8 do Vitest (`@vitest/coverage-v8`), configurado em `vitest.config.ts`.
+- **Domínios críticos** = `src/domain/**` e `src/application/**`, onde mora a regra de negócio.
+  Se statements, branches, funções ou linhas ficarem abaixo de **80%** em qualquer um deles, o
+  comando falha e o CI fica vermelho.
+- A infraestrutura entra no relatório, mas não bloqueia: controllers são cobertos pelos testes
+  HTTP, e repositórios Prisma pedem testes de integração com banco real.
+- Ficam fora da medição o bootstrap (`server/main.ts`), o seed e o schema/migrations do Prisma.
+- O relatório navegável é gerado em `coverage/index.html`.
+
+### Testes de integração
+
+```bash
+pnpm test:integration
+```
+
+- Rodam contra PostgreSQL real (`*.integration.spec.ts`, configurados em `vitest.integration.config.ts`)
+  e ficam fora do `pnpm test` e do CI, porque precisam do banco do compose no ar.
+- Usam o banco `techchallenge_test` (ou `TEST_DATABASE_URL`), que recebe as migrations antes da suíte.
+  Por segurança, a suíte só roda em banco cujo nome termina em `_test`.
+
+### Pipeline de CI (`.github/workflows/ci.yml`)
+
+Roda em todo pull request e em todo push na `main`:
+
+1. Instala dependências (`pnpm install --frozen-lockfile`) e gera o Prisma Client.
+2. `pnpm typecheck`.
+3. `pnpm test:coverage`, aplicando o mínimo de 80%.
+4. Publica o relatório de cobertura como artefato `coverage-report` (fica 30 dias na execução),
+   que serve de evidência da cobertura exigida na entrega.

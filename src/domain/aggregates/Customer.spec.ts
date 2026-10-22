@@ -39,11 +39,16 @@ describe('Customer', () => {
       expect(customer.phone).toBeNull();
     });
 
-    it('trata e-mail e telefone em branco como ausentes', () => {
-      const customer = Customer.create({ ...validInput, email: '   ', phone: '' });
+    it('rejeita e-mail em branco: contato ausente deve ser null', () => {
+      expect(() => Customer.create({ ...validInput, email: '   ' })).toThrow(
+        expect.objectContaining({ code: 'INVALID_EMAIL' }),
+      );
+    });
 
-      expect(customer.email).toBeNull();
-      expect(customer.phone).toBeNull();
+    it('rejeita telefone em branco: contato ausente deve ser null', () => {
+      expect(() => Customer.create({ ...validInput, phone: '' })).toThrow(
+        expect.objectContaining({ code: 'INVALID_PHONE' }),
+      );
     });
 
     it('remove o codigo do pais do telefone', () => {

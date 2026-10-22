@@ -1,16 +1,11 @@
-import { USER_ROLES } from '../../../domain/value-objects/UserRole.ts';
-import { z } from '../Zod.ts';
+import { userSchema } from '../../../domain/schemas/UserSchema.ts';
+import type { z } from 'zod';
+import '../Zod.ts';
+import { timestampsOutputShape } from './TimestampsOutput.ts';
 
-export const userOutputSchema = z
-  .object({
-    id: z.uuid(),
-    name: z.string(),
-    email: z.email(),
-    role: z.enum(USER_ROLES),
-    active: z.boolean(),
-    createdAt: z.iso.datetime(),
-    updatedAt: z.iso.datetime(),
-  })
+export const userOutputSchema = userSchema
+  .omit({ passwordHash: true })
+  .extend(timestampsOutputShape)
   .openapi('UserOutput');
 
 export type UserOutput = z.infer<typeof userOutputSchema>;

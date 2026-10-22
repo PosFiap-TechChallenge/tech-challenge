@@ -1,5 +1,4 @@
 import { inject, injectable } from 'inversify';
-import { User } from '../../../domain/aggregates/User.ts';
 import type { PasswordHasher } from '../../../domain/providers/PasswordHasher.ts';
 import type { TokenProvider } from '../../../domain/providers/TokenProvider.ts';
 import type { UserRepository } from '../../../domain/repositories/UserRepository.ts';
@@ -21,7 +20,7 @@ export class SignInUseCase {
   ) {}
 
   async execute(input: SignInInput): Promise<AuthTokenOutput> {
-    const user = await this.userRepository.findByEmail(User.normalizeEmail(input.email));
+    const user = await this.userRepository.findByEmail(input.email);
 
     if (!user) {
       throw new InvalidCredentialsError();

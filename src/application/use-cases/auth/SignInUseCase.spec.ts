@@ -5,6 +5,7 @@ import {
   makeUserRepositoryMock,
 } from '../../../domain/test/mocks/AuthMocks.ts';
 import { makeUser } from '../../../domain/test/mocks/UserMock.ts';
+import { signInInputSchema } from '../../dto/inputs/SignInInput.ts';
 import { ForbiddenError, UnauthorizedError } from '../../exceptions/AppError.ts';
 import { SignInUseCase } from './SignInUseCase.ts';
 
@@ -14,7 +15,7 @@ describe('SignInUseCase', () => {
   const tokenProvider = makeTokenProviderMock();
   const useCase = new SignInUseCase(userRepository, passwordHasher, tokenProvider);
 
-  const input = { email: 'ANA@oficina.com', password: 'Oficina123' };
+  const input = signInInputSchema.parse({ email: 'ANA@oficina.com', password: 'Oficina123' });
 
   beforeEach(() => {
     userRepository.findByEmail.mockReset();

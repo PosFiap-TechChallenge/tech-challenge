@@ -1,55 +1,29 @@
-import { DomainError } from '../errors/DomainError.ts';
+import type { z } from 'zod';
 import { VehicleRegisteredEvent } from '../events/VehicleRegisteredEvent.ts';
+import { vehicleSchema, type VehicleData } from '../schemas/VehicleSchema.ts';
 import { AggregateRoot } from '../shared/AggregateRoot.ts';
 import type { Brand } from '../shared/Brand.ts';
+import { applyChanges, type Changes } from '../shared/Changes.ts';
 import { generateId } from '../shared/Entity.ts';
+import { parseSchema } from '../shared/parseSchema.ts';
 import { LicensePlate } from '../value-objects/LicensePlate.ts';
 import type { CustomerId } from './Customer.ts';
 
 export type VehicleId = Brand<string, 'VehicleId'>;
 
-export const VEHICLE_BRAND_MAX_LENGTH = 80;
-export const VEHICLE_MODEL_MAX_LENGTH = 100;
-export const VEHICLE_MIN_YEAR = 1900;
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-type VehicleProps = {
+type VehicleProps = Omit<VehicleData, 'id' | 'plate' | 'customerId'> & {
   plate: LicensePlate;
-  brand: string;
-  model: string;
-  year: number;
   customerId: CustomerId;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
-export type VehiclePrimitives = {
-  id: string;
-  plate: string;
-  brand: string;
-  model: string;
-  year: number;
-  customerId: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+type VehicleContent = Omit<VehicleData, 'id' | 'createdAt' | 'updatedAt'>;
 
-export type NewVehicleData = {
-  plate: string;
-  brand: string;
-  model: string;
-  year: number;
-  customerId: string;
-};
-
-/** `undefined` mantem o valor atual; alterar `customerId` transfere o veiculo para outro cliente. */
-export type UpdateVehicleChanges = {
-  plate?: string | undefined;
-  brand?: string | undefined;
-  model?: string | undefined;
-  year?: number | undefined;
-  customerId?: string | undefined;
+const ERROR_CODES = {
+  plate: 'INVALID_LICENSE_PLATE',
+  brand: 'INVALID_VEHICLE_TEXT',
+  model: 'INVALID_VEHICLE_TEXT',
+  year: 'INVALID_VEHICLE_YEAR',
+  customerId: 'INVALID_VEHICLE_CUSTOMER',
 };
 
 export class Vehicle extends AggregateRoot<VehicleProps, VehicleId> {
@@ -57,25 +31,23 @@ export class Vehicle extends AggregateRoot<VehicleProps, VehicleId> {
     super(props, id);
   }
 
-  private static build(primitives: Omit<VehiclePrimitives, 'id'>): VehicleProps {
-    return {
-      plate: LicensePlate.create(primitives.plate),
-      brand: Vehicle.requireText(primitives.brand, 'Marca', VEHICLE_BRAND_MAX_LENGTH),
-      model: Vehicle.requireText(primitives.model, 'Modelo', VEHICLE_MODEL_MAX_LENGTH),
-      year: Vehicle.requireValidYear(primitives.year),
-      customerId: Vehicle.requireCustomerId(primitives.customerId),
-      createdAt: primitives.createdAt,
-      updatedAt: primitives.updatedAt,
-    };
+  private static parse(data: z.input<typeof vehicleSchema>): VehicleData {
+    return parseSchema(vehicleSchema, data, ERROR_CODES, 'INVALID_VEHICLE');
   }
 
-  static create(input: NewVehicleData): Vehicle {
+  private static toProps({ id: _id, plate, customerId, ...data }: VehicleData): VehicleProps {
+    return { ...data, plate: LicensePlate.create(plate), customerId: customerId as CustomerId };
+  }
+
+  static create(input: VehicleContent): Vehicle {
     const now = new Date();
 
-    const vehicle = new Vehicle(
-      Vehicle.build({ ...input, createdAt: now, updatedAt: now }),
-      generateId<VehicleId>(),
-    );
+    const vehicle = Vehicle.from({
+      ...input,
+      id: generateId<VehicleId>(),
+      createdAt: now,
+      updatedAt: now,
+    });
 
     vehicle.raiseEvent(
       new VehicleRegisteredEvent({
@@ -88,12 +60,10 @@ export class Vehicle extends AggregateRoot<VehicleProps, VehicleId> {
     return vehicle;
   }
 
-  static from(primitives: VehiclePrimitives): Vehicle {
-    return new Vehicle(Vehicle.build(primitives), primitives.id as VehicleId);
-  }
+  static from(data: z.input<typeof vehicleSchema>): Vehicle {
+    const vehicle = Vehicle.parse(data);
 
-  static isValidYear(year: number): boolean {
-    return Number.isInteger(year) && year >= VEHICLE_MIN_YEAR && year <= Vehicle.maxYear();
+    return new Vehicle(Vehicle.toProps(vehicle), vehicle.id as VehicleId);
   }
 
   get plate(): LicensePlate {
@@ -124,54 +94,17 @@ export class Vehicle extends AggregateRoot<VehicleProps, VehicleId> {
     return this.props.updatedAt;
   }
 
-  /** Valida todos os campos antes de aplicar: uma falha nao deixa o veiculo parcialmente alterado. */
-  update(changes: UpdateVehicleChanges): void {
-    const nextProps = Vehicle.build({
-      plate: changes.plate ?? this.props.plate.value,
-      brand: changes.brand ?? this.props.brand,
-      model: changes.model ?? this.props.model,
-      year: changes.year ?? this.props.year,
-      customerId: changes.customerId ?? this.props.customerId,
-      createdAt: this.props.createdAt,
-      updatedAt: new Date(),
-    });
-
-    Object.assign(this.props, nextProps);
+  toData(): VehicleData {
+    return { ...this.props, id: this.id, plate: this.props.plate.value };
   }
 
-  private static maxYear(): number {
-    return new Date().getFullYear() + 1;
-  }
+  /**
+   * Valida todos os campos antes de aplicar: uma falha nao deixa o veiculo parcialmente alterado.
+   * Alterar `customerId` transfere o veiculo para outro cliente.
+   */
+  update(changes: Changes<VehicleContent>): void {
+    const next = Vehicle.parse({ ...applyChanges(this.toData(), changes), updatedAt: new Date() });
 
-  private static requireText(raw: string, label: string, maxLength: number): string {
-    const value = raw.trim();
-
-    if (!value || value.length > maxLength) {
-      throw new DomainError(
-        `${label} do veiculo deve ter entre 1 e ${maxLength} caracteres`,
-        'INVALID_VEHICLE_TEXT',
-      );
-    }
-
-    return value;
-  }
-
-  private static requireValidYear(year: number): number {
-    if (!Vehicle.isValidYear(year)) {
-      throw new DomainError(
-        `Ano do veiculo deve estar entre ${VEHICLE_MIN_YEAR} e ${Vehicle.maxYear()}`,
-        'INVALID_VEHICLE_YEAR',
-      );
-    }
-
-    return year;
-  }
-
-  private static requireCustomerId(raw: string): CustomerId {
-    if (!UUID_PATTERN.test(raw)) {
-      throw new DomainError('Identificador do cliente invalido', 'INVALID_VEHICLE_CUSTOMER');
-    }
-
-    return raw as CustomerId;
+    Object.assign(this.props, Vehicle.toProps(next));
   }
 }

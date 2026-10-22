@@ -1,13 +1,6 @@
-import { z } from '../Zod.ts';
-import { vehiclePlateSchema } from './VehicleFields.ts';
+import { vehicleSchema } from '../../../domain/schemas/VehicleSchema.ts';
+import '../Zod.ts';
 
-export const vehicleIdParamsSchema = z.object({
-  id: z.uuid().openapi({ param: { name: 'id', in: 'path' } }),
-});
+export const vehicleIdParamsSchema = vehicleSchema.pick({ id: true });
 
-export const vehiclePlateParamsSchema = z.object({
-  plate: vehiclePlateSchema.openapi({
-    param: { name: 'plate', in: 'path' },
-    example: 'ABC1D23',
-  }),
-});
+export const vehiclePlateParamsSchema = vehicleSchema.pick({ plate: true });

@@ -1,8 +1,9 @@
-import { Customer, type CustomerPrimitives } from '../../aggregates/Customer.ts';
+import { Customer } from '../../aggregates/Customer.ts';
+import type { CustomerData } from '../../schemas/CustomerSchema.ts';
 
 export const CUSTOMER_ID = '0b7c1d2e-3f40-4a5b-8c6d-7e8f9a0b1c2d';
 
-export function makeCustomer(overrides: Partial<CustomerPrimitives> = {}): Customer {
+export function makeCustomer(overrides: Partial<CustomerData> = {}): Customer {
   return Customer.from({
     id: CUSTOMER_ID,
     name: 'Joao da Silva',

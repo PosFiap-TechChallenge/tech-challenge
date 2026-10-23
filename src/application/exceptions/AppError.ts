@@ -55,3 +55,24 @@ export class ConflictError extends AppError {
     super(`${resource} com este ${field} ja existe`, 'CONFLICT', 409, { resource, field });
   }
 }
+
+export class ConcurrentUpdateError extends AppError {
+  constructor(resource: string) {
+    super(
+      `${resource} foi alterado por outra operacao; tente novamente`,
+      'CONCURRENT_UPDATE',
+      409,
+      { resource },
+    );
+  }
+}
+
+export class PartHasStockHistoryError extends AppError {
+  constructor() {
+    super(
+      'Peca possui movimentacoes de estoque e nao pode ser removida',
+      'PART_HAS_STOCK_HISTORY',
+      409,
+    );
+  }
+}

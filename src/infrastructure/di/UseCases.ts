@@ -10,6 +10,18 @@ import { GetCustomerByIdUseCase } from '../../application/use-cases/customers/Ge
 import { ListCustomersUseCase } from '../../application/use-cases/customers/ListCustomersUseCase.ts';
 import { UpdateCustomerUseCase } from '../../application/use-cases/customers/UpdateCustomerUseCase.ts';
 import { GetHealthUseCase } from '../../application/use-cases/GetHealthUseCase.ts';
+import { AdjustStockUseCase } from '../../application/use-cases/parts/AdjustStockUseCase.ts';
+import { ConsumePartsUseCase } from '../../application/use-cases/parts/ConsumePartsUseCase.ts';
+import { CreatePartUseCase } from '../../application/use-cases/parts/CreatePartUseCase.ts';
+import { GetPartByIdUseCase } from '../../application/use-cases/parts/GetPartByIdUseCase.ts';
+import { ListPartsUseCase } from '../../application/use-cases/parts/ListPartsUseCase.ts';
+import { ListStockMovementsUseCase } from '../../application/use-cases/parts/ListStockMovementsUseCase.ts';
+import { RegisterStockEntryUseCase } from '../../application/use-cases/parts/RegisterStockEntryUseCase.ts';
+import { ReservePartsUseCase } from '../../application/use-cases/parts/ReservePartsUseCase.ts';
+import { DeletePartUseCase } from '../../application/use-cases/parts/DeletePartUseCase.ts';
+import { PartCommandRunner } from '../../application/use-cases/parts/PartCommandRunner.ts';
+import { ReleasePartReservationsUseCase } from '../../application/use-cases/parts/ReleasePartReservationsUseCase.ts';
+import { UpdatePartUseCase } from '../../application/use-cases/parts/UpdatePartUseCase.ts';
 import { CreateVehicleUseCase } from '../../application/use-cases/vehicles/CreateVehicleUseCase.ts';
 import { DeleteVehicleUseCase } from '../../application/use-cases/vehicles/DeleteVehicleUseCase.ts';
 import { GetVehicleByIdUseCase } from '../../application/use-cases/vehicles/GetVehicleByIdUseCase.ts';
@@ -76,5 +88,50 @@ export function configureUseCases(container: Container): void {
   container
     .bind<DeleteVehicleUseCase>(TYPES.DeleteVehicleUseCase)
     .to(DeleteVehicleUseCase)
+    .inTransientScope();
+  container
+    .bind<AdjustStockUseCase>(TYPES.AdjustStockUseCase)
+    .to(AdjustStockUseCase)
+    .inTransientScope();
+  container
+    .bind<ConsumePartsUseCase>(TYPES.ConsumePartsUseCase)
+    .to(ConsumePartsUseCase)
+    .inTransientScope();
+  container
+    .bind<CreatePartUseCase>(TYPES.CreatePartUseCase)
+    .to(CreatePartUseCase)
+    .inTransientScope();
+  container
+    .bind<GetPartByIdUseCase>(TYPES.GetPartByIdUseCase)
+    .to(GetPartByIdUseCase)
+    .inTransientScope();
+  container.bind<ListPartsUseCase>(TYPES.ListPartsUseCase).to(ListPartsUseCase).inTransientScope();
+  container
+    .bind<ListStockMovementsUseCase>(TYPES.ListStockMovementsUseCase)
+    .to(ListStockMovementsUseCase)
+    .inTransientScope();
+  container
+    .bind<RegisterStockEntryUseCase>(TYPES.RegisterStockEntryUseCase)
+    .to(RegisterStockEntryUseCase)
+    .inTransientScope();
+  container
+    .bind<ReservePartsUseCase>(TYPES.ReservePartsUseCase)
+    .to(ReservePartsUseCase)
+    .inTransientScope();
+  container
+    .bind<DeletePartUseCase>(TYPES.DeletePartUseCase)
+    .to(DeletePartUseCase)
+    .inTransientScope();
+  container
+    .bind<PartCommandRunner>(TYPES.PartCommandRunner)
+    .to(PartCommandRunner)
+    .inTransientScope();
+  container
+    .bind<ReleasePartReservationsUseCase>(TYPES.ReleasePartReservationsUseCase)
+    .to(ReleasePartReservationsUseCase)
+    .inTransientScope();
+  container
+    .bind<UpdatePartUseCase>(TYPES.UpdatePartUseCase)
+    .to(UpdatePartUseCase)
     .inTransientScope();
 }

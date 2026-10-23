@@ -20,6 +20,7 @@
     "test": "vitest --run",
     "test:coverage": "vitest --run --coverage",
     "test:watch": "vitest",
+    "test:integration": "vitest --run --config vitest.integration.config.ts",
     "prisma:generate": "prisma generate --schema src/infrastructure/database/prisma/schema.prisma",
     "migrate": "prisma migrate dev --schema src/infrastructure/database/prisma/schema.prisma",
     "migrate:deploy": "prisma migrate deploy --schema src/infrastructure/database/prisma/schema.prisma",

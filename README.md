@@ -484,14 +484,15 @@ regra é aplicada automaticamente no CI.
 ```bash
 pnpm test            # suíte completa
 pnpm test:coverage   # suíte + cobertura, com o mínimo de 80% aplicado
+pnpm test:integration  # integração contra PostgreSQL real (exige o banco no ar)
 ```
 
-| Tipo de teste          | O que cobre                                                                                        |
-| ---------------------- | -------------------------------------------------------------------------------------------------- |
-| Unitários de domínio   | Agregados, objetos de valor e schemas (CPF/CNPJ, placa, e-mail, telefone)                          |
-| Unitários de aplicação | Casos de uso com repositórios e providers mockados, incluindo casos de borda                       |
-| HTTP (supertest)       | Fluxo completo rota → validação → caso de uso → erro, com JWT real                                 |
-| Integração com banco   | 🔗 pendente <!-- TODO: descrever quando os testes de integração com PostgreSQL forem mergeados --> |
+| Tipo de teste          | O que cobre                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| Unitários de domínio   | Agregados, objetos de valor e schemas (CPF/CNPJ, placa, e-mail, telefone)    |
+| Unitários de aplicação | Casos de uso com repositórios e providers mockados, incluindo casos de borda |
+| HTTP (supertest)       | Fluxo completo rota → validação → caso de uso → erro, com JWT real           |
+| Integração com banco   | Repositórios Prisma contra PostgreSQL real (banco `techchallenge_test`)      |
 
 ### Cobertura
 
@@ -506,6 +507,17 @@ pnpm test:coverage   # suíte + cobertura, com o mínimo de 80% aplicado
 
 <!-- TODO: incluir o resumo/print da cobertura da versão de entrega (ex.: docs/evidencias/cobertura.png). -->
 
+### Testes de integração
+
+```bash
+pnpm test:integration
+```
+
+- Rodam contra PostgreSQL real (`*.integration.spec.ts`, configurados em `vitest.integration.config.ts`)
+  e ficam fora do `pnpm test`, porque precisam de um banco no ar (localmente, o do compose).
+- Usam o banco `techchallenge_test` (ou `TEST_DATABASE_URL`), que recebe as migrations antes da suíte.
+  Por segurança, a suíte só roda em banco cujo nome termina em `_test`.
+
 ### Pipeline de CI (`.github/workflows/ci.yml`)
 
 Roda em todo pull request e em todo push na `main`:
@@ -515,6 +527,9 @@ Roda em todo pull request e em todo push na `main`:
 3. `pnpm test:coverage`, aplicando o mínimo de 80%.
 4. Publica o relatório de cobertura como artefato `coverage-report` (fica 30 dias na execução),
    que serve de evidência da cobertura exigida na entrega.
+
+Em paralelo, o job `integration` sobe um PostgreSQL 16 como serviço e roda `pnpm test:integration`
+contra o banco `techchallenge_test`.
 
 Toda mudança na `main` chega por pull request, com o CI verde como requisito para o merge.
 
@@ -545,27 +560,28 @@ Controles já aplicados na aplicação:
 
 ## 13. Scripts disponíveis
 
-| Script            | Comando                                                       | Descrição                                                     |
-| ----------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
-| `dev`             | `tsx watch --env-file=.env src/infrastructure/server/main.ts` | Servidor em desenvolvimento com hot reload                    |
-| `build`           | `tsup ... --format esm --out-dir dist --clean`                | Bundle ESM de produção em `dist/main.js`                      |
-| `start`           | `node --env-file=.env dist/main.js`                           | Executa o bundle gerado                                       |
-| `typecheck`       | `tsc --noEmit`                                                | Verificação de tipos sem emitir arquivos                      |
-| `lint`            | `eslint .`                                                    | Analisa o código                                              |
-| `lint:fix`        | `eslint . --fix`                                              | Corrige automaticamente o que dá                              |
-| `format`          | `prettier --write .`                                          | Formata o projeto                                             |
-| `format:check`    | `prettier --check .`                                          | Falha se algo estiver fora do formato                         |
-| `test`            | `vitest --run`                                                | Roda a suíte de testes uma vez                                |
-| `test:coverage`   | `vitest --run --coverage`                                     | Testes + cobertura; falha abaixo de 80% em domain/application |
-| `test:watch`      | `vitest`                                                      | Testes em modo watch                                          |
-| `prisma:generate` | `prisma generate --schema ...`                                | Gera o Prisma Client                                          |
-| `migrate`         | `prisma migrate dev --schema ...`                             | Cria/aplica migration em dev                                  |
-| `migrate:deploy`  | `prisma migrate deploy --schema ...`                          | Aplica migrations pendentes                                   |
-| `seed:admin`      | `tsx --env-file=.env .../seed/seedAdmin.ts`                   | Cria o usuário ADMIN inicial (idempotente)                    |
-| `studio`          | `prisma studio --schema ...`                                  | Interface visual do banco                                     |
-| `docker:up`       | `docker compose up -d --build --wait`                         | Sobe banco + API e espera ficarem saudáveis                   |
-| `docker:down`     | `docker compose down --remove-orphans`                        | Derruba os containers                                         |
-| `docker:clean`    | `docker compose down -v --remove-orphans`                     | Derruba tudo **e apaga o volume do banco**                    |
+| Script             | Comando                                                       | Descrição                                                                                                |
+| ------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `dev`              | `tsx watch --env-file=.env src/infrastructure/server/main.ts` | Servidor em desenvolvimento com hot reload                                                               |
+| `build`            | `tsup ... --format esm --out-dir dist --clean`                | Bundle ESM de produção em `dist/main.js`                                                                 |
+| `start`            | `node --env-file=.env dist/main.js`                           | Executa o bundle gerado                                                                                  |
+| `typecheck`        | `tsc --noEmit`                                                | Verificação de tipos sem emitir arquivos                                                                 |
+| `lint`             | `eslint .`                                                    | Analisa o código                                                                                         |
+| `lint:fix`         | `eslint . --fix`                                              | Corrige automaticamente o que dá                                                                         |
+| `format`           | `prettier --write .`                                          | Formata o projeto                                                                                        |
+| `format:check`     | `prettier --check .`                                          | Falha se algo estiver fora do formato                                                                    |
+| `test`             | `vitest --run`                                                | Roda a suíte de testes uma vez                                                                           |
+| `test:coverage`    | `vitest --run --coverage`                                     | Testes + cobertura; falha abaixo de 80% em domain/application                                            |
+| `test:integration` | `vitest --run --config vitest.integration.config.ts`          | Testes de integração contra PostgreSQL real (banco `techchallenge_test`; exige o banco do compose no ar) |
+| `test:watch`       | `vitest`                                                      | Testes em modo watch                                                                                     |
+| `prisma:generate`  | `prisma generate --schema ...`                                | Gera o Prisma Client                                                                                     |
+| `migrate`          | `prisma migrate dev --schema ...`                             | Cria/aplica migration em dev                                                                             |
+| `migrate:deploy`   | `prisma migrate deploy --schema ...`                          | Aplica migrations pendentes                                                                              |
+| `seed:admin`       | `tsx --env-file=.env .../seed/seedAdmin.ts`                   | Cria o usuário ADMIN inicial (idempotente)                                                               |
+| `studio`           | `prisma studio --schema ...`                                  | Interface visual do banco                                                                                |
+| `docker:up`        | `docker compose up -d --build --wait`                         | Sobe banco + API e espera ficarem saudáveis                                                              |
+| `docker:down`      | `docker compose down --remove-orphans`                        | Derruba os containers                                                                                    |
+| `docker:clean`     | `docker compose down -v --remove-orphans`                     | Derruba tudo **e apaga o volume do banco**                                                               |
 
 ---
 

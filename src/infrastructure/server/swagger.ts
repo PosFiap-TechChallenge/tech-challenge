@@ -26,12 +26,26 @@ import {
   vehicleOutputSchema,
   vehiclePageOutputSchema,
 } from '../../application/dto/outputs/VehicleOutput.ts';
+import { adjustStockInputSchema } from '../../application/dto/inputs/AdjustStockInput.ts';
+import { createPartInputSchema } from '../../application/dto/inputs/CreatePartInput.ts';
+import { listPartsInputSchema } from '../../application/dto/inputs/ListPartsInput.ts';
+import { listStockMovementsInputSchema } from '../../application/dto/inputs/ListStockMovementsInput.ts';
+import { partIdParamsSchema } from '../../application/dto/inputs/PartParams.ts';
+import { updatePartInputSchema } from '../../application/dto/inputs/UpdatePartInput.ts';
+import { registerStockEntryInputSchema } from '../../application/dto/inputs/RegisterStockEntryInput.ts';
+import {
+  partOutputSchema,
+  partPageOutputSchema,
+  stockMovementOutputSchema,
+  stockMovementPageOutputSchema,
+} from '../../application/dto/outputs/PartOutput.ts';
 
 type OpenApiDocument = ReturnType<OpenApiGeneratorV3['generateDocument']>;
 
 const BEARER_AUTH = 'bearerAuth';
 const CUSTOMERS_TAG = 'Customers';
 const VEHICLES_TAG = 'Vehicles';
+const PARTS_TAG = 'Parts';
 
 function registerHealthPaths(registry: OpenAPIRegistry): void {
   const healthResponse = registry.register('HealthResponse', healthResponseSchema);
@@ -339,6 +353,174 @@ function registerVehiclePaths(registry: OpenAPIRegistry): void {
   });
 }
 
+function registerPartPaths(registry: OpenAPIRegistry): void {
+  const createPartInput = registry.register('CreatePartInput', createPartInputSchema);
+  const registerStockEntryInput = registry.register(
+    'RegisterStockEntryInput',
+    registerStockEntryInputSchema,
+  );
+  const adjustStockInput = registry.register('AdjustStockInput', adjustStockInputSchema);
+  const updatePartInput = registry.register('UpdatePartInput', updatePartInputSchema);
+  const partOutput = registry.register('PartOutput', partOutputSchema);
+  const partPageOutput = registry.register('PartPageOutput', partPageOutputSchema);
+  registry.register('StockMovementOutput', stockMovementOutputSchema);
+  const stockMovementPageOutput = registry.register(
+    'StockMovementPageOutput',
+    stockMovementPageOutputSchema,
+  );
+
+  const partResponse = { 'application/json': { schema: partOutput } };
+
+  registry.registerPath({
+    method: 'post',
+    path: '/parts',
+    tags: [PARTS_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Cadastra uma peca com o estoque inicial (somente ADMIN)',
+    request: { body: { content: { 'application/json': { schema: createPartInput } } } },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN' },
+      201: { description: 'Peca cadastrada e estoque inicial registrado', content: partResponse },
+      400: { description: 'Payload invalido' },
+      409: { description: 'Codigo ja cadastrado' },
+      422: { description: 'Regra de dominio violada' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/parts',
+    tags: [PARTS_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Lista pecas paginadas com seus saldos, da mais recente para a mais antiga',
+    request: { query: listPartsInputSchema },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      200: {
+        description: 'Pagina de pecas',
+        content: { 'application/json': { schema: partPageOutput } },
+      },
+      400: { description: 'Parametros de paginacao ou filtro invalidos' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/parts/{id}',
+    tags: [PARTS_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Detalha uma peca e seus saldos',
+    request: { params: partIdParamsSchema },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      200: { description: 'Peca encontrada', content: partResponse },
+      400: { description: 'Id invalido' },
+      404: { description: 'Peca nao encontrada' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/parts/{id}/movements',
+    tags: [PARTS_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Lista o historico de movimentacoes de estoque da peca',
+    request: { params: partIdParamsSchema, query: listStockMovementsInputSchema },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      200: {
+        description: 'Pagina de movimentacoes, da mais recente para a mais antiga',
+        content: { 'application/json': { schema: stockMovementPageOutput } },
+      },
+      400: { description: 'Id ou paginacao invalidos' },
+      404: { description: 'Peca nao encontrada' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'post',
+    path: '/parts/{id}/entries',
+    tags: [PARTS_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Registra entrada de pecas no estoque (somente ADMIN)',
+    request: {
+      params: partIdParamsSchema,
+      body: { content: { 'application/json': { schema: registerStockEntryInput } } },
+    },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN' },
+      200: { description: 'Entrada registrada', content: partResponse },
+      400: { description: 'Payload invalido' },
+      404: { description: 'Peca nao encontrada' },
+      409: { description: 'Peca alterada por operacoes simultaneas (apos retentativas)' },
+      422: { description: 'Regra de dominio violada (ex.: saldo acima do limite)' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'post',
+    path: '/parts/{id}/adjustments',
+    tags: [PARTS_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Ajusta manualmente o saldo fisico para a quantidade contada (somente ADMIN)',
+    request: {
+      params: partIdParamsSchema,
+      body: { content: { 'application/json': { schema: adjustStockInput } } },
+    },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN' },
+      200: { description: 'Ajuste registrado', content: partResponse },
+      400: { description: 'Payload invalido' },
+      404: { description: 'Peca nao encontrada' },
+      409: { description: 'Saldo alterado desde a leitura; reconte e ajuste novamente' },
+      422: { description: 'Ajuste igual ao saldo atual ou abaixo do reservado' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'patch',
+    path: '/parts/{id}',
+    tags: [PARTS_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Edita codigo, nome ou estoque minimo (somente ADMIN); saldos nao mudam',
+    request: {
+      params: partIdParamsSchema,
+      body: { content: { 'application/json': { schema: updatePartInput } } },
+    },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN' },
+      200: { description: 'Peca atualizada', content: partResponse },
+      400: { description: 'Payload invalido ou vazio' },
+      404: { description: 'Peca nao encontrada' },
+      409: { description: 'Codigo pertence a outra peca' },
+      422: { description: 'Regra de dominio violada' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'delete',
+    path: '/parts/{id}',
+    tags: [PARTS_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Remove uma peca cadastrada por engano (somente ADMIN)',
+    description:
+      'So e permitido enquanto a peca tiver apenas o estoque inicial; com qualquer outra movimentacao responde 409.',
+    request: { params: partIdParamsSchema },
+    responses: {
+      401: { description: 'Token ausente, invalido ou expirado' },
+      403: { description: 'Usuario sem papel ADMIN' },
+      204: { description: 'Peca removida' },
+      400: { description: 'Id invalido' },
+      404: { description: 'Peca nao encontrada' },
+      409: { description: 'Peca possui movimentacoes de estoque' },
+    },
+  });
+}
+
 export function buildOpenApiDocument(): OpenApiDocument {
   const registry = new OpenAPIRegistry();
 
@@ -352,6 +534,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
   registerAuthPaths(registry);
   registerCustomerPaths(registry);
   registerVehiclePaths(registry);
+  registerPartPaths(registry);
 
   const generator = new OpenApiGeneratorV3(registry.definitions);
 

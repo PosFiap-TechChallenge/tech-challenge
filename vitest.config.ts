@@ -15,6 +15,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.spec.ts'],
+    // Testes de integracao precisam de PostgreSQL: rodam com `pnpm test:integration`.
+    exclude: ['src/**/*.integration.spec.ts'],
     env: {
       NODE_ENV: 'test',
       PORT: '3000',

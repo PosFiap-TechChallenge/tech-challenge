@@ -22,6 +22,11 @@ import { DeletePartUseCase } from '../../application/use-cases/parts/DeletePartU
 import { PartCommandRunner } from '../../application/use-cases/parts/PartCommandRunner.ts';
 import { ReleasePartReservationsUseCase } from '../../application/use-cases/parts/ReleasePartReservationsUseCase.ts';
 import { UpdatePartUseCase } from '../../application/use-cases/parts/UpdatePartUseCase.ts';
+import { CreateServiceUseCase } from '../../application/use-cases/services/CreateServiceUseCase.ts';
+import { DeleteServiceUseCase } from '../../application/use-cases/services/DeleteServiceUseCase.ts';
+import { GetServiceByIdUseCase } from '../../application/use-cases/services/GetServiceByIdUseCase.ts';
+import { ListServicesUseCase } from '../../application/use-cases/services/ListServicesUseCase.ts';
+import { UpdateServiceUseCase } from '../../application/use-cases/services/UpdateServiceUseCase.ts';
 import { CreateVehicleUseCase } from '../../application/use-cases/vehicles/CreateVehicleUseCase.ts';
 import { DeleteVehicleUseCase } from '../../application/use-cases/vehicles/DeleteVehicleUseCase.ts';
 import { GetVehicleByIdUseCase } from '../../application/use-cases/vehicles/GetVehicleByIdUseCase.ts';
@@ -133,5 +138,25 @@ export function configureUseCases(container: Container): void {
   container
     .bind<UpdatePartUseCase>(TYPES.UpdatePartUseCase)
     .to(UpdatePartUseCase)
+    .inTransientScope();
+  container
+    .bind<CreateServiceUseCase>(TYPES.CreateServiceUseCase)
+    .to(CreateServiceUseCase)
+    .inTransientScope();
+  container
+    .bind<GetServiceByIdUseCase>(TYPES.GetServiceByIdUseCase)
+    .to(GetServiceByIdUseCase)
+    .inTransientScope();
+  container
+    .bind<ListServicesUseCase>(TYPES.ListServicesUseCase)
+    .to(ListServicesUseCase)
+    .inTransientScope();
+  container
+    .bind<UpdateServiceUseCase>(TYPES.UpdateServiceUseCase)
+    .to(UpdateServiceUseCase)
+    .inTransientScope();
+  container
+    .bind<DeleteServiceUseCase>(TYPES.DeleteServiceUseCase)
+    .to(DeleteServiceUseCase)
     .inTransientScope();
 }

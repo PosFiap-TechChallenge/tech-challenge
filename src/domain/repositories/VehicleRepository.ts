@@ -1,11 +1,10 @@
-import type { CustomerId } from '../aggregates/Customer.ts';
 import type { Vehicle, VehicleId } from '../aggregates/Vehicle.ts';
 import type { LicensePlate } from '../value-objects/LicensePlate.ts';
 
 export type VehicleListQuery = {
   page: number;
   pageSize: number;
-  customerId?: CustomerId | undefined;
+  customerId?: string | undefined;
 };
 
 export type VehiclePage = {

@@ -15,6 +15,7 @@ export const TYPES = {
   CustomerRepository: Symbol.for('CustomerRepository'),
   VehicleRepository: Symbol.for('VehicleRepository'),
   PartRepository: Symbol.for('PartRepository'),
+  ServiceRepository: Symbol.for('ServiceRepository'),
 
   // Casos de uso
   GetHealthUseCase: Symbol.for('GetHealthUseCase'),
@@ -45,6 +46,11 @@ export const TYPES = {
   UpdatePartUseCase: Symbol.for('UpdatePartUseCase'),
   DeletePartUseCase: Symbol.for('DeletePartUseCase'),
   PartCommandRunner: Symbol.for('PartCommandRunner'),
+  CreateServiceUseCase: Symbol.for('CreateServiceUseCase'),
+  GetServiceByIdUseCase: Symbol.for('GetServiceByIdUseCase'),
+  ListServicesUseCase: Symbol.for('ListServicesUseCase'),
+  UpdateServiceUseCase: Symbol.for('UpdateServiceUseCase'),
+  DeleteServiceUseCase: Symbol.for('DeleteServiceUseCase'),
 
   // Handlers de eventos de dominio (multi-binding: o EventPublisher entrega a todos)
   DomainEventHandler: Symbol.for('DomainEventHandler'),

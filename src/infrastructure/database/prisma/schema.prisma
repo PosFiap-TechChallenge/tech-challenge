@@ -62,6 +62,19 @@ model Vehicle {
   @@map("vehicles")
 }
 
+/// Item do catalogo da oficina, com preco e tempo estimado de execucao.
+model Service {
+  id               String   @id @db.Uuid
+  name             String   @unique @db.VarChar(120)
+  price            Decimal  @db.Decimal(12, 2)
+  estimatedMinutes Int      @map("estimated_minutes")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@index([createdAt])
+  @@map("services")
+}
+
 /// Tipos de movimentacao de estoque.
 enum StockMovementType {
   INITIAL

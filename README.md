@@ -69,7 +69,7 @@ documentação **OpenAPI/Swagger** gerada a partir dos mesmos schemas que valida
 | Clientes                | CRUD; identificação por CPF ou CNPJ (inclusive CNPJ alfanumérico) com validação     | ✅ Implementado       |
 | Veículos                | CRUD; placa no padrão antigo ou Mercosul, marca, modelo e ano, vínculo com cliente  | ✅ Implementado       |
 | Peças e insumos         | CRUD com controle de estoque (entrada, ajuste, reserva e liberação)                 | 🚧 Em desenvolvimento |
-| Serviços                | CRUD do catálogo de serviços (ex.: troca de óleo, alinhamento)                      | 🚧 Em desenvolvimento |
+| Serviços                | CRUD do catálogo de serviços (ex.: troca de óleo, alinhamento)                      | ✅ Implementado       |
 | Ordem de Serviço        | Criação, inclusão de serviços e peças, listagem e detalhamento                      | 🚧 Em desenvolvimento |
 | Orçamento               | Geração automática, envio para aprovação, registro de aprovação ou rejeição         | 🚧 Em desenvolvimento |
 | Acompanhamento da OS    | Status e regras de transição; consulta do andamento pelo cliente via API            | 🚧 Em desenvolvimento |
@@ -216,7 +216,7 @@ Tudo que é substituível: HTTP, banco, segurança, configuração, documentaç�
 ```
 src/
 ├── domain/
-│   ├── aggregates/         # Customer, Vehicle, User (+ testes)
+│   ├── aggregates/         # Customer, Vehicle, User, Service, Part (+ testes)
 │   ├── schemas/            # schemas Zod de cada agregado e campos (email, telefone, CPF/CNPJ, placa, senha)
 │   ├── value-objects/      # TaxDocument, LicensePlate, UserRole
 │   ├── events/             # eventos de domínio
@@ -231,7 +231,7 @@ src/
 │   │   ├── outputs/        # DTOs de saída
 │   │   ├── Types.ts        # símbolos de injeção de dependência
 │   │   └── Zod.ts          # Zod estendido com suporte a OpenAPI
-│   ├── use-cases/          # auth/, customers/, vehicles/
+│   ├── use-cases/          # auth/, customers/, vehicles/, services/, parts/
 │   ├── mappers/            # agregado → resposta da API
 │   └── exceptions/         # AppError, NotFoundError, ConflictError...
 └── infrastructure/
@@ -241,7 +241,7 @@ src/
     │   ├── mappers/        # registro do banco ↔ agregado
     │   └── seed/           # criação do usuário ADMIN inicial
     ├── http/
-    │   ├── controllers/    # Auth, Customer, Vehicle, Health (+ testes HTTP)
+    │   ├── controllers/    # Auth, Customer, Vehicle, Service, Part, Health (+ testes HTTP)
     │   ├── middlewares/    # AuthMiddleware, errorHandler
     │   └── routing/        # decorators @Route e @Auth
     ├── providers/          # JoseTokenProvider (JWT), ScryptPasswordHasher
@@ -288,7 +288,8 @@ entidades, objetos de valor, bounded contexts e a linguagem ubíqua.
 | Repositórios (contratos)  | [`src/domain/repositories/`](src/domain/repositories/)                                       |
 | Agregado Ordem de Serviço | 🔗 pendente <!-- TODO -->                                                                    |
 | Agregado Peça / Insumo    | 🔗 pendente <!-- TODO -->                                                                    |
-| Agregado Serviço          | 🔗 pendente <!-- TODO -->                                                                    |
+| Agregado Serviço          | [`src/domain/aggregates/Service.ts`](src/domain/aggregates/Service.ts)                       |
+| Evento Serviço registrado | [`src/domain/events/ServiceRegisteredEvent.ts`](src/domain/events/ServiceRegisteredEvent.ts) |
 
 ---
 
@@ -449,12 +450,25 @@ partir dos mesmos schemas Zod que validam as requisições.
 | PATCH  | `/vehicles/:id`          | `ADMIN`/`ATTENDANT` | Atualiza ou transfere para outro cliente |
 | DELETE | `/vehicles/:id`          | `ADMIN`             | Remove                                   |
 
+### Serviços (catálogo)
+
+| Método | Rota            | Acesso                       | Descrição                          |
+| ------ | --------------- | ---------------------------- | ---------------------------------- |
+| POST   | `/services`     | `ADMIN`                      | Cadastra serviço com preço e tempo |
+| GET    | `/services`     | qualquer usuário autenticado | Lista paginada do catálogo         |
+| GET    | `/services/:id` | qualquer usuário autenticado | Detalha um serviço                 |
+| PATCH  | `/services/:id` | `ADMIN`                      | Atualiza parcialmente              |
+| DELETE | `/services/:id` | `ADMIN`                      | Remove                             |
+
+O nome do serviço é único. O preço (reais, até 2 casas) e o tempo estimado (minutos) são copiados para o
+Item de Serviço da OS ao incluí-lo, então editar o catálogo não altera orçamentos já gerados. Detalhes em
+[Catálogo de Serviços](docs/ddd/catalogo-de-servicos.md).
+
 ### Em desenvolvimento
 
 | Módulo                       | Endpoints                 |
 | ---------------------------- | ------------------------- |
 | Peças e insumos / estoque    | 🔗 pendente <!-- TODO --> |
-| Serviços                     | 🔗 pendente <!-- TODO --> |
 | Ordem de Serviço e orçamento | 🔗 pendente <!-- TODO --> |
 | Acompanhamento pelo cliente  | 🔗 pendente <!-- TODO --> |
 | Tempo médio de execução      | 🔗 pendente <!-- TODO --> |
@@ -779,7 +793,7 @@ A configuração tem duas peças, uma redundante de propósito:
 | `pnpm migrate:deploy`  | Aplica migrations pendentes sem criar novas (produção/CI)     |
 | `pnpm studio`          | Abre o Prisma Studio para navegar pelos dados                 |
 
-Models atuais: `User`, `Customer` e `Vehicle`, com uma migration versionada para cada um.
+Models atuais: `User`, `Customer`, `Vehicle`, `Part`, `StockMovement` e `Service`, com uma migration versionada para cada um.
 
 ---
 

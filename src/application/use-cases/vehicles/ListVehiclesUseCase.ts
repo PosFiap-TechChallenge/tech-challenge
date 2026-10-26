@@ -1,5 +1,4 @@
 import { inject, injectable } from 'inversify';
-import type { CustomerId } from '../../../domain/aggregates/Customer.ts';
 import type { VehicleRepository } from '../../../domain/repositories/VehicleRepository.ts';
 import type { ListVehiclesInput } from '../../dto/inputs/ListVehiclesInput.ts';
 import type { VehiclePageOutput } from '../../dto/outputs/VehicleOutput.ts';
@@ -17,7 +16,7 @@ export class ListVehiclesUseCase {
     const { items, total } = await this.vehicleRepository.list({
       page: input.page,
       pageSize: input.pageSize,
-      customerId: input.customerId as CustomerId | undefined,
+      customerId: input.customerId,
     });
 
     return {

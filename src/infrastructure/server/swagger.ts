@@ -26,6 +26,14 @@ import {
   vehicleOutputSchema,
   vehiclePageOutputSchema,
 } from '../../application/dto/outputs/VehicleOutput.ts';
+import { createServiceInputSchema } from '../../application/dto/inputs/CreateServiceInput.ts';
+import { listServicesInputSchema } from '../../application/dto/inputs/ListServicesInput.ts';
+import { serviceIdParamsSchema } from '../../application/dto/inputs/ServiceParams.ts';
+import { updateServiceInputSchema } from '../../application/dto/inputs/UpdateServiceInput.ts';
+import {
+  serviceOutputSchema,
+  servicePageOutputSchema,
+} from '../../application/dto/outputs/ServiceOutput.ts';
 import { adjustStockInputSchema } from '../../application/dto/inputs/AdjustStockInput.ts';
 import { createPartInputSchema } from '../../application/dto/inputs/CreatePartInput.ts';
 import { listPartsInputSchema } from '../../application/dto/inputs/ListPartsInput.ts';
@@ -46,6 +54,7 @@ const BEARER_AUTH = 'bearerAuth';
 const CUSTOMERS_TAG = 'Customers';
 const VEHICLES_TAG = 'Vehicles';
 const PARTS_TAG = 'Parts';
+const SERVICES_TAG = 'Services';
 
 function registerHealthPaths(registry: OpenAPIRegistry): void {
   const healthResponse = registry.register('HealthResponse', healthResponseSchema);
@@ -521,6 +530,102 @@ function registerPartPaths(registry: OpenAPIRegistry): void {
   });
 }
 
+function registerServicePaths(registry: OpenAPIRegistry): void {
+  const createServiceInput = registry.register('CreateServiceInput', createServiceInputSchema);
+  const updateServiceInput = registry.register('UpdateServiceInput', updateServiceInputSchema);
+  const serviceOutput = registry.register('ServiceOutput', serviceOutputSchema);
+  const servicePageOutput = registry.register('ServicePageOutput', servicePageOutputSchema);
+
+  const serviceResponse = { 'application/json': { schema: serviceOutput } };
+  const unauthorized = { description: 'Token ausente, invalido ou expirado' };
+  const forbidden = { description: 'Usuario sem papel ADMIN' };
+
+  registry.registerPath({
+    method: 'post',
+    path: '/services',
+    tags: [SERVICES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Cadastra um servico no catalogo (somente ADMIN)',
+    request: { body: { content: { 'application/json': { schema: createServiceInput } } } },
+    responses: {
+      401: unauthorized,
+      403: forbidden,
+      201: { description: 'Servico cadastrado', content: serviceResponse },
+      400: { description: 'Payload invalido' },
+      409: { description: 'Ja existe servico com este nome' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/services',
+    tags: [SERVICES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Lista o catalogo de servicos com paginacao (qualquer usuario autenticado)',
+    request: { query: listServicesInputSchema },
+    responses: {
+      401: unauthorized,
+      200: {
+        description: 'Pagina de servicos',
+        content: { 'application/json': { schema: servicePageOutput } },
+      },
+      400: { description: 'Parametros de paginacao invalidos' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/services/{id}',
+    tags: [SERVICES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Detalha um servico (qualquer usuario autenticado)',
+    request: { params: serviceIdParamsSchema },
+    responses: {
+      401: unauthorized,
+      200: { description: 'Servico encontrado', content: serviceResponse },
+      400: { description: 'Id invalido' },
+      404: { description: 'Servico nao encontrado' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'patch',
+    path: '/services/{id}',
+    tags: [SERVICES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Atualiza parcialmente um servico (somente ADMIN)',
+    request: {
+      params: serviceIdParamsSchema,
+      body: { content: { 'application/json': { schema: updateServiceInput } } },
+    },
+    responses: {
+      401: unauthorized,
+      403: forbidden,
+      200: { description: 'Servico atualizado', content: serviceResponse },
+      400: { description: 'Payload invalido ou vazio' },
+      404: { description: 'Servico nao encontrado' },
+      409: { description: 'Nome pertence a outro servico' },
+      422: { description: 'Regra de dominio violada' },
+    },
+  });
+
+  registry.registerPath({
+    method: 'delete',
+    path: '/services/{id}',
+    tags: [SERVICES_TAG],
+    security: [{ [BEARER_AUTH]: [] }],
+    summary: 'Remove um servico do catalogo (somente ADMIN)',
+    request: { params: serviceIdParamsSchema },
+    responses: {
+      401: unauthorized,
+      403: forbidden,
+      204: { description: 'Servico removido' },
+      400: { description: 'Id invalido' },
+      404: { description: 'Servico nao encontrado' },
+    },
+  });
+}
+
 export function buildOpenApiDocument(): OpenApiDocument {
   const registry = new OpenAPIRegistry();
 
@@ -535,6 +640,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
   registerCustomerPaths(registry);
   registerVehiclePaths(registry);
   registerPartPaths(registry);
+  registerServicePaths(registry);
 
   const generator = new OpenApiGeneratorV3(registry.definitions);
 

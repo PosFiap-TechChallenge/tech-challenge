@@ -1,7 +1,11 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../../application/dto/Types.ts';
-import { ConflictError, NotFoundError } from '../../../application/exceptions/AppError.ts';
+import {
+  AppError,
+  ConflictError,
+  NotFoundError,
+} from '../../../application/exceptions/AppError.ts';
 import type { Vehicle, VehicleId } from '../../../domain/aggregates/Vehicle.ts';
 import type {
   VehicleListQuery,
@@ -10,6 +14,7 @@ import type {
 } from '../../../domain/repositories/VehicleRepository.ts';
 import type { LicensePlate } from '../../../domain/value-objects/LicensePlate.ts';
 import { VehiclePersistenceMapper } from '../mappers/VehiclePersistenceMapper.ts';
+import { currentClient } from '../TransactionContext.ts';
 
 const UNIQUE_CONSTRAINT_VIOLATION = 'P2002';
 const FOREIGN_KEY_VIOLATION = 'P2003';
@@ -35,6 +40,19 @@ function translateWriteError(error: unknown): unknown {
   return error;
 }
 
+/** Na remocao, a chave estrangeira violada e a das Ordens de Servico, nao a do cliente. */
+function translateDeleteError(error: unknown): unknown {
+  if (hasPrismaErrorCode(error, FOREIGN_KEY_VIOLATION)) {
+    return new AppError(
+      'Veiculo possui Ordens de Servico e nao pode ser removido',
+      'VEHICLE_HAS_ORDERS',
+      409,
+    );
+  }
+
+  return translateWriteError(error);
+}
+
 @injectable()
 export class PrismaVehicleRepository implements VehicleRepository {
   constructor(
@@ -43,13 +61,15 @@ export class PrismaVehicleRepository implements VehicleRepository {
   ) {}
 
   async findById(id: VehicleId): Promise<Vehicle | null> {
-    const record = await this.prisma.vehicle.findUnique({ where: { id } });
+    const record = await currentClient(this.prisma).vehicle.findUnique({ where: { id } });
 
     return record ? VehiclePersistenceMapper.toDomain(record) : null;
   }
 
   async findByPlate(plate: LicensePlate): Promise<Vehicle | null> {
-    const record = await this.prisma.vehicle.findUnique({ where: { plate: plate.value } });
+    const record = await currentClient(this.prisma).vehicle.findUnique({
+      where: { plate: plate.value },
+    });
 
     return record ? VehiclePersistenceMapper.toDomain(record) : null;
   }
@@ -72,7 +92,9 @@ export class PrismaVehicleRepository implements VehicleRepository {
 
   async create(vehicle: Vehicle): Promise<void> {
     try {
-      await this.prisma.vehicle.create({ data: VehiclePersistenceMapper.toPersistence(vehicle) });
+      await currentClient(this.prisma).vehicle.create({
+        data: VehiclePersistenceMapper.toPersistence(vehicle),
+      });
     } catch (error) {
       throw translateWriteError(error);
     }
@@ -92,7 +114,7 @@ export class PrismaVehicleRepository implements VehicleRepository {
     try {
       await this.prisma.vehicle.delete({ where: { id } });
     } catch (error) {
-      throw translateWriteError(error);
+      throw translateDeleteError(error);
     }
   }
 }

@@ -3,7 +3,9 @@ import { TYPES } from '../../application/dto/Types.ts';
 import type { DomainEventHandler } from '../../application/events/DomainEventHandler.ts';
 import type { EventPublisher } from '../../domain/providers/EventPublisher.ts';
 import type { PasswordHasher } from '../../domain/providers/PasswordHasher.ts';
+import type { UnitOfWork } from '../../domain/providers/UnitOfWork.ts';
 import type { TokenProvider } from '../../domain/providers/TokenProvider.ts';
+import { PrismaUnitOfWork } from '../database/PrismaUnitOfWork.ts';
 import { env } from '../env/Env.ts';
 import { MinimumStockReachedAlertHandler } from '../events/handlers/MinimumStockReachedAlertHandler.ts';
 import { InProcessEventPublisher } from '../events/InProcessEventPublisher.ts';
@@ -27,6 +29,7 @@ export function configureProviders(container: Container): void {
     .bind<DomainEventHandler>(TYPES.DomainEventHandler)
     .to(MinimumStockReachedAlertHandler)
     .inSingletonScope();
+  container.bind<UnitOfWork>(TYPES.UnitOfWork).to(PrismaUnitOfWork).inSingletonScope();
   container
     .bind<EventPublisher>(TYPES.EventPublisher)
     .to(InProcessEventPublisher)

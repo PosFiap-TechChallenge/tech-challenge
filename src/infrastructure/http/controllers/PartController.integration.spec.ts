@@ -66,7 +66,7 @@ describe('Gestao de pecas e insumos (HTTP + PostgreSQL)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.$executeRawUnsafe('TRUNCATE TABLE stock_movements, parts');
+    await prisma.$executeRawUnsafe('TRUNCATE TABLE stock_movements, parts CASCADE');
   });
 
   afterAll(async () => {

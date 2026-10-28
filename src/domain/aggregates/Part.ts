@@ -280,15 +280,15 @@ export class Part extends AggregateRoot<PartProps, PartId> {
     );
   }
 
+  /** Confirma que a quantidade cabe no disponivel, sem reservar: verificacao ao montar a Ordem de Servico. */
+  assertAvailable(quantity: number): void {
+    this.requireAvailable(this.requirePositive(quantity, 'Quantidade solicitada'));
+  }
+
   reserve(quantity: number): void {
     const amount = this.requirePositive(quantity, 'Quantidade a reservar');
 
-    if (amount.isGreaterThan(this.availableQuantity)) {
-      throw new DomainError(
-        `Saldo disponivel insuficiente: disponivel ${this.available}, solicitado ${amount.value}`,
-        'INSUFFICIENT_STOCK',
-      );
-    }
+    this.requireAvailable(amount);
 
     const reservedAfter = this.props.reserved.plus(amount);
 
@@ -383,6 +383,15 @@ export class Part extends AggregateRoot<PartProps, PartId> {
     }
 
     return amount;
+  }
+
+  private requireAvailable(amount: Quantity): void {
+    if (amount.isGreaterThan(this.availableQuantity)) {
+      throw new DomainError(
+        `Saldo disponivel insuficiente: disponivel ${this.available}, solicitado ${amount.value}`,
+        'INSUFFICIENT_STOCK',
+      );
+    }
   }
 
   private requireReserved(value: number, label: string): Quantity {

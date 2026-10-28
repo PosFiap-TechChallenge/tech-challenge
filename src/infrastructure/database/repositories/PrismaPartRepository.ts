@@ -16,6 +16,7 @@ import type {
   StockMovementPage,
 } from '../../../domain/repositories/PartRepository.ts';
 import { PartPersistenceMapper } from '../mappers/PartPersistenceMapper.ts';
+import { currentClient, runInTransaction } from '../TransactionContext.ts';
 
 const UNIQUE_CONSTRAINT_VIOLATION = 'P2002';
 const FOREIGN_KEY_VIOLATION = 'P2003';
@@ -56,7 +57,7 @@ export class PrismaPartRepository implements PartRepository {
   ) {}
 
   async findById(id: PartId): Promise<Part | null> {
-    const record = await this.prisma.part.findUnique({ where: { id } });
+    const record = await currentClient(this.prisma).part.findUnique({ where: { id } });
 
     return record ? PartPersistenceMapper.toDomain(record) : null;
   }
@@ -123,13 +124,14 @@ export class PrismaPartRepository implements PartRepository {
    * Lock otimista: cada peca so e gravada se a `version` no banco ainda e a que foi
    * lida; se qualquer uma falhar, a transacao inteira e desfeita. As pecas sao
    * gravadas em ordem de id para que lotes concorrentes travem as linhas na mesma
-   * ordem e nao entrem em deadlock.
+   * ordem e nao entrem em deadlock. Dentro de `UnitOfWork.run` entra na transacao da
+   * chamada (ex.: a OS), cujo desfazimento tambem desfaz estas gravacoes.
    */
   async updateAll(parts: readonly Part[]): Promise<void> {
     const ordered = [...parts].sort((a, b) => a.id.localeCompare(b.id));
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await runInTransaction(this.prisma, async (tx) => {
         for (const part of ordered) {
           const {
             id,

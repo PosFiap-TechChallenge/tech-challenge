@@ -56,7 +56,7 @@ async function movementTypes(part: Part): Promise<string[]> {
 
 describe('PrismaPartRepository (PostgreSQL)', () => {
   beforeEach(async () => {
-    await prisma.$executeRawUnsafe('TRUNCATE TABLE stock_movements, parts');
+    await prisma.$executeRawUnsafe('TRUNCATE TABLE stock_movements, parts CASCADE');
   });
 
   afterAll(async () => {

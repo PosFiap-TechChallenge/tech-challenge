@@ -236,6 +236,28 @@ describe('Part', () => {
     });
   });
 
+  describe('assertAvailable', () => {
+    it('aceita quantidade dentro do disponivel sem alterar saldos nem registrar eventos', () => {
+      const part = makePart({ quantity: 10, reserved: 4 });
+
+      expect(() => part.assertAvailable(6)).not.toThrow();
+      expect(part.reserved).toBe(4);
+      expect(part.pendingMovements).toHaveLength(0);
+      expect(part.raisedEvents).toHaveLength(0);
+    });
+
+    it('bloqueia quantidade acima do disponivel', () => {
+      const part = makePart({ quantity: 10, reserved: 4 });
+
+      expect(() => part.assertAvailable(6.001)).toThrow(DomainError);
+      expect(() => part.assertAvailable(7)).toThrow(/disponivel 6, solicitado 7/);
+    });
+
+    it.each([0, -1, 1.5])('rejeita quantidade invalida para peca em UN: %s', (quantity) => {
+      expect(() => makePart().assertAvailable(quantity)).toThrow(DomainError);
+    });
+  });
+
   describe('consume', () => {
     it('baixa o saldo fisico e a reserva ao mesmo tempo', () => {
       const part = makePart({ quantity: 10, reserved: 4, minimumStock: 3 });

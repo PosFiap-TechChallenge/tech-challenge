@@ -18,7 +18,7 @@ async function persisted(name: string, price = 89.9): Promise<Service> {
 
 describe('PrismaServiceRepository (PostgreSQL)', () => {
   beforeEach(async () => {
-    await prisma.$executeRawUnsafe('TRUNCATE TABLE services');
+    await prisma.$executeRawUnsafe('TRUNCATE TABLE services CASCADE');
   });
 
   afterAll(async () => {

@@ -70,7 +70,7 @@ export class ConcurrentUpdateError extends AppError {
 export class PartHasStockHistoryError extends AppError {
   constructor() {
     super(
-      'Peca possui movimentacoes de estoque e nao pode ser removida',
+      'Peca possui movimentacoes de estoque ou esta em Ordens de Servico e nao pode ser removida',
       'PART_HAS_STOCK_HISTORY',
       409,
     );

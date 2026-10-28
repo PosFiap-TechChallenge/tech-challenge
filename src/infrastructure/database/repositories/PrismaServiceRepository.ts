@@ -1,7 +1,11 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../../application/dto/Types.ts';
-import { ConflictError, NotFoundError } from '../../../application/exceptions/AppError.ts';
+import {
+  AppError,
+  ConflictError,
+  NotFoundError,
+} from '../../../application/exceptions/AppError.ts';
 import type { Service, ServiceId } from '../../../domain/aggregates/Service.ts';
 import type {
   ServiceListQuery,
@@ -11,6 +15,7 @@ import type {
 import { ServicePersistenceMapper } from '../mappers/ServicePersistenceMapper.ts';
 
 const UNIQUE_CONSTRAINT_VIOLATION = 'P2002';
+const FOREIGN_KEY_VIOLATION = 'P2003';
 const RECORD_NOT_FOUND = 'P2025';
 
 function hasPrismaErrorCode(error: unknown, code: string): boolean {
@@ -20,6 +25,14 @@ function hasPrismaErrorCode(error: unknown, code: string): boolean {
 function translateWriteError(error: unknown): unknown {
   if (hasPrismaErrorCode(error, UNIQUE_CONSTRAINT_VIOLATION)) {
     return new ConflictError('Servico', 'nome');
+  }
+
+  if (hasPrismaErrorCode(error, FOREIGN_KEY_VIOLATION)) {
+    return new AppError(
+      'Servico esta em Ordens de Servico e nao pode ser removido',
+      'SERVICE_IN_USE',
+      409,
+    );
   }
 
   if (hasPrismaErrorCode(error, RECORD_NOT_FOUND)) {

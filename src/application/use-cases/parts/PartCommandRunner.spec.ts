@@ -115,4 +115,35 @@ describe('PartCommandRunner', () => {
     );
     expect(partRepository.updateAll).toHaveBeenCalledOnce();
   });
+
+  describe('apply', () => {
+    it('grava as pecas sem publicar eventos: quem chama publica depois do commit', async () => {
+      partRepository.findById.mockResolvedValue(makePart({ quantity: 10 }));
+
+      const [part] = await runner.apply([id], (parts) =>
+        parts.forEach((target) => target.reserve(4)),
+      );
+
+      expect(partRepository.updateAll).toHaveBeenCalledOnce();
+      expect(eventPublisher.publish).not.toHaveBeenCalled();
+      expect(part?.raisedEvents).toHaveLength(1);
+    });
+
+    it('nao repete em conflito de versao: a retentativa pertence a quem controla a transacao', async () => {
+      partRepository.findById.mockResolvedValue(makePart({ quantity: 10 }));
+      partRepository.updateAll.mockRejectedValue(new ConcurrentUpdateError('Peca'));
+
+      await expect(
+        runner.apply([id], (parts) => parts.forEach((target) => target.reserve(1))),
+      ).rejects.toBeInstanceOf(ConcurrentUpdateError);
+      expect(partRepository.findById).toHaveBeenCalledOnce();
+    });
+
+    it('rejeita com NotFoundError quando alguma peca nao existe', async () => {
+      partRepository.findById.mockResolvedValue(null);
+
+      await expect(runner.apply([id], vi.fn())).rejects.toBeInstanceOf(NotFoundError);
+      expect(partRepository.updateAll).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -3,6 +3,10 @@ import { TYPES } from '../../application/dto/Types.ts';
 import { AuthController } from '../http/controllers/AuthController.ts';
 import { CustomerController } from '../http/controllers/CustomerController.ts';
 import { HealthController } from '../http/controllers/HealthController.ts';
+import { ReportController } from '../http/controllers/ReportController.ts';
+import { ServiceOrderController } from '../http/controllers/ServiceOrderController.ts';
+import { ServiceOrderWorkflowController } from '../http/controllers/ServiceOrderWorkflowController.ts';
+import { TrackingController } from '../http/controllers/TrackingController.ts';
 import { ServiceController } from '../http/controllers/ServiceController.ts';
 import { PartController } from '../http/controllers/PartController.ts';
 import { VehicleController } from '../http/controllers/VehicleController.ts';
@@ -18,4 +22,8 @@ export function configureControllers(container: Container): void {
   container.bind<object>(TYPES.Controller).to(VehicleController).inSingletonScope();
   container.bind<object>(TYPES.Controller).to(PartController).inSingletonScope();
   container.bind<object>(TYPES.Controller).to(ServiceController).inSingletonScope();
+  container.bind<object>(TYPES.Controller).to(ServiceOrderController).inSingletonScope();
+  container.bind<object>(TYPES.Controller).to(ServiceOrderWorkflowController).inSingletonScope();
+  container.bind<object>(TYPES.Controller).to(TrackingController).inSingletonScope();
+  container.bind<object>(TYPES.Controller).to(ReportController).inSingletonScope();
 }

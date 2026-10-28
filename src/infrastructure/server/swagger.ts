@@ -34,6 +34,7 @@ import {
   serviceOutputSchema,
   servicePageOutputSchema,
 } from '../../application/dto/outputs/ServiceOutput.ts';
+import { registerServiceOrderPaths } from './swaggerServiceOrders.ts';
 import { adjustStockInputSchema } from '../../application/dto/inputs/AdjustStockInput.ts';
 import { createPartInputSchema } from '../../application/dto/inputs/CreatePartInput.ts';
 import { listPartsInputSchema } from '../../application/dto/inputs/ListPartsInput.ts';
@@ -50,7 +51,7 @@ import {
 
 type OpenApiDocument = ReturnType<OpenApiGeneratorV3['generateDocument']>;
 
-const BEARER_AUTH = 'bearerAuth';
+export const BEARER_AUTH = 'bearerAuth';
 const CUSTOMERS_TAG = 'Customers';
 const VEHICLES_TAG = 'Vehicles';
 const PARTS_TAG = 'Parts';
@@ -358,6 +359,7 @@ function registerVehiclePaths(registry: OpenAPIRegistry): void {
       204: { description: 'Veiculo removido' },
       400: { description: 'Id invalido' },
       404: { description: 'Veiculo nao encontrado' },
+      409: { description: 'Veiculo possui Ordens de Servico (VEHICLE_HAS_ORDERS)' },
     },
   });
 }
@@ -525,7 +527,7 @@ function registerPartPaths(registry: OpenAPIRegistry): void {
       204: { description: 'Peca removida' },
       400: { description: 'Id invalido' },
       404: { description: 'Peca nao encontrada' },
-      409: { description: 'Peca possui movimentacoes de estoque' },
+      409: { description: 'Peca possui movimentacoes de estoque ou esta em Ordens de Servico' },
     },
   });
 }
@@ -622,6 +624,7 @@ function registerServicePaths(registry: OpenAPIRegistry): void {
       204: { description: 'Servico removido' },
       400: { description: 'Id invalido' },
       404: { description: 'Servico nao encontrado' },
+      409: { description: 'Servico esta em Ordens de Servico (SERVICE_IN_USE)' },
     },
   });
 }
@@ -641,6 +644,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
   registerVehiclePaths(registry);
   registerPartPaths(registry);
   registerServicePaths(registry);
+  registerServiceOrderPaths(registry);
 
   const generator = new OpenApiGeneratorV3(registry.definitions);
 

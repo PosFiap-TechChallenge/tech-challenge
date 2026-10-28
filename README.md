@@ -63,28 +63,31 @@ documentação **OpenAPI/Swagger** gerada a partir dos mesmos schemas que valida
 
 ### Funcionalidades
 
-| Módulo                  | Escopo                                                                              | Status                |
-| ----------------------- | ----------------------------------------------------------------------------------- | --------------------- |
-| Autenticação            | Login com JWT, cadastro de usuários internos, papéis `ADMIN`/`ATTENDANT`/`MECHANIC` | ✅ Implementado       |
-| Clientes                | CRUD; identificação por CPF ou CNPJ (inclusive CNPJ alfanumérico) com validação     | ✅ Implementado       |
-| Veículos                | CRUD; placa no padrão antigo ou Mercosul, marca, modelo e ano, vínculo com cliente  | ✅ Implementado       |
-| Peças e insumos         | CRUD com controle de estoque (entrada, ajuste, reserva e liberação)                 | 🚧 Em desenvolvimento |
-| Serviços                | CRUD do catálogo de serviços (ex.: troca de óleo, alinhamento)                      | ✅ Implementado       |
-| Ordem de Serviço        | Criação, inclusão de serviços e peças, listagem e detalhamento                      | 🚧 Em desenvolvimento |
-| Orçamento               | Geração automática, envio para aprovação, registro de aprovação ou rejeição         | 🚧 Em desenvolvimento |
-| Acompanhamento da OS    | Status e regras de transição; consulta do andamento pelo cliente via API            | 🚧 Em desenvolvimento |
-| Tempo médio de execução | Cálculo do tempo médio de execução dos serviços                                     | 🚧 Em desenvolvimento |
-| Qualidade               | CI com typecheck e testes; cobertura mínima de 80% nos domínios críticos            | ✅ Implementado       |
-
-<!-- TODO: atualizar a coluna "Status" conforme os módulos forem mergeados na main. -->
+| Módulo                  | Escopo                                                                              | Status          |
+| ----------------------- | ----------------------------------------------------------------------------------- | --------------- |
+| Autenticação            | Login com JWT, cadastro de usuários internos, papéis `ADMIN`/`ATTENDANT`/`MECHANIC` | ✅ Implementado |
+| Clientes                | CRUD; identificação por CPF ou CNPJ (inclusive CNPJ alfanumérico) com validação     | ✅ Implementado |
+| Veículos                | CRUD; placa no padrão antigo ou Mercosul, marca, modelo e ano, vínculo com cliente  | ✅ Implementado |
+| Peças e insumos         | CRUD com controle de estoque (entrada, ajuste, reserva e liberação)                 | ✅ Implementado |
+| Serviços                | CRUD do catálogo de serviços (ex.: troca de óleo, alinhamento)                      | ✅ Implementado |
+| Ordem de Serviço        | Criação, inclusão de serviços e peças, listagem e detalhamento                      | ✅ Implementado |
+| Orçamento               | Geração automática, envio para aprovação, registro de aprovação ou rejeição         | ✅ Implementado |
+| Acompanhamento da OS    | Status e regras de transição; consulta do andamento pelo cliente via API            | ✅ Implementado |
+| Tempo médio de execução | Cálculo do tempo médio de execução dos serviços                                     | ✅ Implementado |
+| Qualidade               | CI com typecheck e testes; cobertura mínima de 80% nos domínios críticos            | ✅ Implementado |
 
 ### Status da Ordem de Serviço
 
 ```
 Recebida ──▶ Em diagnóstico ──▶ Aguardando aprovação ──▶ Em execução ──▶ Finalizada ──▶ Entregue
+                  ▲                      │
+                  └── orçamento rejeitado┘
 ```
 
-<!-- TODO: incluir aqui o diagrama de estados final, com o caminho de rejeição do orçamento, quando a OS for implementada. -->
+Os status só mudam por comandos (iniciar diagnóstico, enviar orçamento, aprovar ou rejeitar, finalizar,
+entregar): não existe rota que escolha o status, e o domínio recusa toda transição fora da tabela.
+Aprovar o orçamento já inicia a execução e reserva as peças; rejeitar devolve a OS ao diagnóstico para
+revisar os itens. Diagrama completo em [Ordem de Serviço](docs/ddd/ordem-de-servico.md#13-status-e-transições).
 
 ### Stack resumida
 
@@ -216,12 +219,13 @@ Tudo que é substituível: HTTP, banco, segurança, configuração, documentaç�
 ```
 src/
 ├── domain/
-│   ├── aggregates/         # Customer, Vehicle, User, Service, Part (+ testes)
+│   ├── aggregates/         # Customer, Vehicle, User, Service, Part, ServiceOrder (+ testes)
+│   ├── entities/           # ServiceItem, PartItem (entidades internas da Ordem de Serviço)
 │   ├── schemas/            # schemas Zod de cada agregado e campos (email, telefone, CPF/CNPJ, placa, senha)
-│   ├── value-objects/      # TaxDocument, LicensePlate, UserRole
+│   ├── value-objects/      # TaxDocument, LicensePlate, Money, Quantity, OrderStatus, Budget, UserRole
 │   ├── events/             # eventos de domínio
 │   ├── repositories/       # interfaces de repositório
-│   ├── providers/          # interfaces de serviços externos (token, hash de senha)
+│   ├── providers/          # interfaces de serviços externos (token, hash de senha, unidade de trabalho)
 │   ├── errors/             # DomainError
 │   ├── shared/             # AggregateRoot, Entity, Brand, Changes, parseSchema
 │   └── test/mocks/         # mocks e repositórios em memória para os testes
@@ -231,17 +235,19 @@ src/
 │   │   ├── outputs/        # DTOs de saída
 │   │   ├── Types.ts        # símbolos de injeção de dependência
 │   │   └── Zod.ts          # Zod estendido com suporte a OpenAPI
-│   ├── use-cases/          # auth/, customers/, vehicles/, services/, parts/
+│   ├── use-cases/          # auth/, customers/, vehicles/, services/, parts/, service-orders/
+│   ├── services/           # executor de comandos da OS (transação + retry) e contrato com o estoque
 │   ├── mappers/            # agregado → resposta da API
 │   └── exceptions/         # AppError, NotFoundError, ConflictError...
 └── infrastructure/
     ├── database/
     │   ├── prisma/         # schema.prisma + migrations versionadas
+    │   ├── TransactionContext.ts, PrismaUnitOfWork.ts  # transação compartilhada entre repositórios
     │   ├── repositories/   # implementações Prisma dos repositórios
     │   ├── mappers/        # registro do banco ↔ agregado
     │   └── seed/           # criação do usuário ADMIN inicial
     ├── http/
-    │   ├── controllers/    # Auth, Customer, Vehicle, Service, Part, Health (+ testes HTTP)
+    │   ├── controllers/    # Auth, Customer, Vehicle, Service, Part, ServiceOrder, Tracking, Report, Health
     │   ├── middlewares/    # AuthMiddleware, errorHandler
     │   └── routing/        # decorators @Route e @Auth
     ├── providers/          # JoseTokenProvider (JWT), ScryptPasswordHasher
@@ -251,8 +257,6 @@ src/
     └── server/             # app.ts, main.ts, swagger.ts
 ```
 
-<!-- TODO: atualizar a árvore quando os módulos de peças, serviços e ordem de serviço forem mergeados. -->
-
 ---
 
 ## 7. Documentação DDD
@@ -261,13 +265,14 @@ Board completo no Miro: 🔗 pendente <!-- TODO: link público do Miro (acessív
 
 Versões exportadas ficam em [`docs/ddd/`](docs/ddd/):
 
-| Artefato                                                      | Arquivo                                                        | Status      |
-| ------------------------------------------------------------- | -------------------------------------------------------------- | ----------- |
-| Event Storming — criação da Ordem de Serviço                  | [`docs/ddd/event-storming.pdf`](docs/ddd/event-storming.pdf)   | 🔗 pendente |
-| Event Storming — acompanhamento da Ordem de Serviço           | [`docs/ddd/event-storming.pdf`](docs/ddd/event-storming.pdf)   | 🔗 pendente |
-| Event Storming — gestão de peças e insumos                    | [`docs/ddd/event-storming.pdf`](docs/ddd/event-storming.pdf)   | 🔗 pendente |
-| Diagramas (agregados, entidades, objetos de valor, contextos) | [`docs/ddd/diagramas.pdf`](docs/ddd/diagramas.pdf)             | 🔗 pendente |
-| Linguagem ubíqua e glossário                                  | [`docs/ddd/linguagem-ubiqua.md`](docs/ddd/linguagem-ubiqua.md) | 🔗 pendente |
+| Artefato                                                      | Arquivo                                                                                              | Status                    |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------- |
+| Event Storming — criação da Ordem de Serviço                  | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#11-criação-da-ordem-de-serviço)        | ✅ Texto; PDF 🔗 pendente |
+| Event Storming — acompanhamento da Ordem de Serviço           | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#12-acompanhamento-da-ordem-de-serviço) | ✅ Texto; PDF 🔗 pendente |
+| Event Storming — gestão de peças e insumos                    | [`docs/ddd/gestao-de-pecas-e-insumos.md`](docs/ddd/gestao-de-pecas-e-insumos.md)                     | ✅ Texto; PDF 🔗 pendente |
+| Catálogo de serviços                                          | [`docs/ddd/catalogo-de-servicos.md`](docs/ddd/catalogo-de-servicos.md)                               | ✅                        |
+| Diagramas (agregados, entidades, objetos de valor, contextos) | [`docs/ddd/diagramas.pdf`](docs/ddd/diagramas.pdf)                                                   | 🔗 pendente               |
+| Linguagem ubíqua e glossário                                  | [`docs/ddd/linguagem-ubiqua.md`](docs/ddd/linguagem-ubiqua.md)                                       | ✅                        |
 
 <!-- TODO: marcar cada artefato como concluído quando o arquivo estiver em docs/ddd/. -->
 
@@ -276,20 +281,24 @@ entidades, objetos de valor, bounded contexts e a linguagem ubíqua.
 
 ### Relação entre a documentação e o código
 
-| Conceito DDD              | Onde está no código                                                                          |
-| ------------------------- | -------------------------------------------------------------------------------------------- |
-| Agregado Cliente          | [`src/domain/aggregates/Customer.ts`](src/domain/aggregates/Customer.ts)                     |
-| Agregado Veículo          | [`src/domain/aggregates/Vehicle.ts`](src/domain/aggregates/Vehicle.ts)                       |
-| Agregado Usuário          | [`src/domain/aggregates/User.ts`](src/domain/aggregates/User.ts)                             |
-| Objeto de valor CPF/CNPJ  | [`src/domain/value-objects/TaxDocument.ts`](src/domain/value-objects/TaxDocument.ts)         |
-| Objeto de valor Placa     | [`src/domain/value-objects/LicensePlate.ts`](src/domain/value-objects/LicensePlate.ts)       |
-| Evento Cliente cadastrado | [`src/domain/events/CustomerCreatedEvent.ts`](src/domain/events/CustomerCreatedEvent.ts)     |
-| Evento Veículo registrado | [`src/domain/events/VehicleRegisteredEvent.ts`](src/domain/events/VehicleRegisteredEvent.ts) |
-| Repositórios (contratos)  | [`src/domain/repositories/`](src/domain/repositories/)                                       |
-| Agregado Ordem de Serviço | 🔗 pendente <!-- TODO -->                                                                    |
-| Agregado Peça / Insumo    | 🔗 pendente <!-- TODO -->                                                                    |
-| Agregado Serviço          | [`src/domain/aggregates/Service.ts`](src/domain/aggregates/Service.ts)                       |
-| Evento Serviço registrado | [`src/domain/events/ServiceRegisteredEvent.ts`](src/domain/events/ServiceRegisteredEvent.ts) |
+| Conceito DDD                             | Onde está no código                                                                          |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Agregado Cliente                         | [`src/domain/aggregates/Customer.ts`](src/domain/aggregates/Customer.ts)                     |
+| Agregado Veículo                         | [`src/domain/aggregates/Vehicle.ts`](src/domain/aggregates/Vehicle.ts)                       |
+| Agregado Usuário                         | [`src/domain/aggregates/User.ts`](src/domain/aggregates/User.ts)                             |
+| Objeto de valor CPF/CNPJ                 | [`src/domain/value-objects/TaxDocument.ts`](src/domain/value-objects/TaxDocument.ts)         |
+| Objeto de valor Placa                    | [`src/domain/value-objects/LicensePlate.ts`](src/domain/value-objects/LicensePlate.ts)       |
+| Evento Cliente cadastrado                | [`src/domain/events/CustomerCreatedEvent.ts`](src/domain/events/CustomerCreatedEvent.ts)     |
+| Evento Veículo registrado                | [`src/domain/events/VehicleRegisteredEvent.ts`](src/domain/events/VehicleRegisteredEvent.ts) |
+| Repositórios (contratos)                 | [`src/domain/repositories/`](src/domain/repositories/)                                       |
+| Agregado Ordem de Serviço                | [`src/domain/aggregates/ServiceOrder.ts`](src/domain/aggregates/ServiceOrder.ts)             |
+| Entidades Item de Serviço e Item de Peça | [`src/domain/entities/`](src/domain/entities/)                                               |
+| Objeto de valor Orçamento                | [`src/domain/value-objects/Budget.ts`](src/domain/value-objects/Budget.ts)                   |
+| Status e transições da OS                | [`src/domain/value-objects/OrderStatus.ts`](src/domain/value-objects/OrderStatus.ts)         |
+| Agregado Peça / Insumo                   | [`src/domain/aggregates/Part.ts`](src/domain/aggregates/Part.ts)                             |
+| Unidade de trabalho (transação)          | [`src/domain/providers/UnitOfWork.ts`](src/domain/providers/UnitOfWork.ts)                   |
+| Agregado Serviço                         | [`src/domain/aggregates/Service.ts`](src/domain/aggregates/Service.ts)                       |
+| Evento Serviço registrado                | [`src/domain/events/ServiceRegisteredEvent.ts`](src/domain/events/ServiceRegisteredEvent.ts) |
 
 ---
 
@@ -410,7 +419,15 @@ export class CustomerController {
 | Token expirado                                         | `401 TOKEN_EXPIRED` |
 | Papel do usuário fora dos permitidos                   | `403 FORBIDDEN`     |
 
-<!-- TODO: documentar como o cliente acompanha a OS sem login (rota pública) quando ela for implementada. -->
+### Acompanhamento pelo cliente (rota pública)
+
+O cliente não tem usuário. Ele acompanha a própria OS em `GET /tracking/:id?document=<CPF ou CNPJ>`, sem
+token: o id da OS só responde junto com o documento do dono. OS inexistente e documento de outro cliente
+recebem a mesma resposta (`404`), e a resposta não traz dados pessoais nem ids internos.
+
+```bash
+curl "http://localhost:3000/tracking/<id-da-os>?document=529.982.247-25"
+```
 
 ---
 
@@ -464,14 +481,52 @@ O nome do serviço é único. O preço (reais, até 2 casas) e o tempo estimado 
 Item de Serviço da OS ao incluí-lo, então editar o catálogo não altera orçamentos já gerados. Detalhes em
 [Catálogo de Serviços](docs/ddd/catalogo-de-servicos.md).
 
-### Em desenvolvimento
+### Peças e insumos (estoque)
 
-| Módulo                       | Endpoints                 |
-| ---------------------------- | ------------------------- |
-| Peças e insumos / estoque    | 🔗 pendente <!-- TODO --> |
-| Ordem de Serviço e orçamento | 🔗 pendente <!-- TODO --> |
-| Acompanhamento pelo cliente  | 🔗 pendente <!-- TODO --> |
-| Tempo médio de execução      | 🔗 pendente <!-- TODO --> |
+| Método | Rota                     | Acesso                       | Descrição                                   |
+| ------ | ------------------------ | ---------------------------- | ------------------------------------------- |
+| POST   | `/parts`                 | `ADMIN`                      | Cadastra peça ou insumo com estoque inicial |
+| GET    | `/parts`                 | qualquer usuário autenticado | Lista (`?belowMinimum=true` para reposição) |
+| GET    | `/parts/:id`             | qualquer usuário autenticado | Detalha com saldo, reservado e disponível   |
+| GET    | `/parts/:id/movements`   | qualquer usuário autenticado | Histórico de movimentações                  |
+| PATCH  | `/parts/:id`             | `ADMIN`                      | Edita código, nome, tipo, preço e mínimo    |
+| POST   | `/parts/:id/entries`     | `ADMIN`                      | Registra entrada de estoque                 |
+| POST   | `/parts/:id/adjustments` | `ADMIN`                      | Ajusta o saldo contado, com motivo          |
+| DELETE | `/parts/:id`             | `ADMIN`                      | Remove peça cadastrada por engano           |
+
+Reservar, liberar e consumir peças não têm rota: são disparados pela Ordem de Serviço. Detalhes em
+[Gestão de Peças e Insumos](docs/ddd/gestao-de-pecas-e-insumos.md).
+
+### Ordens de Serviço
+
+| Método | Rota                                   | Acesso                       | Descrição                                                      |
+| ------ | -------------------------------------- | ---------------------------- | -------------------------------------------------------------- |
+| POST   | `/service-orders`                      | `ADMIN`/`ATTENDANT`          | Abre a OS (Recebida): cliente por CPF/CNPJ, veículo pela placa |
+| GET    | `/service-orders`                      | qualquer usuário autenticado | Lista paginada, filtros `status` e `customerId`                |
+| GET    | `/service-orders/:id`                  | qualquer usuário autenticado | Detalha: itens, orçamento, total e histórico                   |
+| POST   | `/service-orders/:id/services`         | qualquer usuário autenticado | Inclui serviço do catálogo (preço congelado)                   |
+| DELETE | `/service-orders/:id/services/:itemId` | qualquer usuário autenticado | Remove serviço (antes do envio do orçamento)                   |
+| POST   | `/service-orders/:id/parts`            | qualquer usuário autenticado | Inclui peça, conferindo o estoque disponível                   |
+| DELETE | `/service-orders/:id/parts/:itemId`    | qualquer usuário autenticado | Remove peça (antes do envio do orçamento)                      |
+| POST   | `/service-orders/:id/diagnosis`        | `ADMIN`/`MECHANIC`           | Recebida → Em diagnóstico                                      |
+| POST   | `/service-orders/:id/budget/send`      | `ADMIN`/`ATTENDANT`          | Gera o orçamento automático e envia: → Aguardando aprovação    |
+| POST   | `/service-orders/:id/budget/approve`   | `ADMIN`/`ATTENDANT`          | Registra a aprovação: → Em execução, reservando as peças       |
+| POST   | `/service-orders/:id/budget/reject`    | `ADMIN`/`ATTENDANT`          | Registra a rejeição: volta a Em diagnóstico                    |
+| POST   | `/service-orders/:id/finish`           | `ADMIN`/`MECHANIC`           | Em execução → Finalizada, consumindo as peças                  |
+| POST   | `/service-orders/:id/deliver`          | `ADMIN`/`ATTENDANT`          | Finalizada → Entregue                                          |
+
+Aprovar e finalizar gravam a OS e o estoque na **mesma transação**: sem saldo para qualquer peça, nada é
+alterado (`422 INSUFFICIENT_STOCK`). Transição inválida responde `422 INVALID_ORDER_TRANSITION`.
+
+### Acompanhamento e relatório
+
+| Método | Rota                      | Acesso      | Descrição                                                        |
+| ------ | ------------------------- | ----------- | ---------------------------------------------------------------- |
+| GET    | `/tracking/:id?document=` | **pública** | Cliente acompanha a própria OS (status, itens, orçamento, tempo) |
+| GET    | `/reports/execution-time` | `ADMIN`     | Tempo médio de execução dos serviços, geral e por serviço        |
+
+Toda a documentação do contexto, incluindo Event Storming, regras e transações, está em
+[Ordem de Serviço](docs/ddd/ordem-de-servico.md).
 
 ### Padrão de erros
 
@@ -501,12 +556,13 @@ pnpm test:coverage   # suíte + cobertura, com o mínimo de 80% aplicado
 pnpm test:integration  # integração contra PostgreSQL real (exige o banco no ar)
 ```
 
-| Tipo de teste          | O que cobre                                                                  |
-| ---------------------- | ---------------------------------------------------------------------------- |
-| Unitários de domínio   | Agregados, objetos de valor e schemas (CPF/CNPJ, placa, e-mail, telefone)    |
-| Unitários de aplicação | Casos de uso com repositórios e providers mockados, incluindo casos de borda |
-| HTTP (supertest)       | Fluxo completo rota → validação → caso de uso → erro, com JWT real           |
-| Integração com banco   | Repositórios Prisma contra PostgreSQL real (banco `techchallenge_test`)      |
+| Tipo de teste             | O que cobre                                                                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Unitários de domínio      | Agregados, objetos de valor e schemas (CPF/CNPJ, placa, e-mail, telefone)                                                              |
+| Unitários de aplicação    | Casos de uso com repositórios e providers mockados, incluindo casos de borda                                                           |
+| HTTP (supertest)          | Fluxo completo rota → validação → caso de uso → erro, com JWT real                                                                     |
+| Integração com banco      | Repositórios Prisma contra PostgreSQL real (banco `techchallenge_test`)                                                                |
+| Integração do fluxo da OS | HTTP + PostgreSQL: criação, orçamento, reserva e baixa de estoque, rejeição, acompanhamento, e as transações (rollback e concorrência) |
 
 ### Cobertura
 
@@ -529,6 +585,9 @@ pnpm test:integration
 
 - Rodam contra PostgreSQL real (`*.integration.spec.ts`, configurados em `vitest.integration.config.ts`)
   e ficam fora do `pnpm test`, porque precisam de um banco no ar (localmente, o do compose).
+- Cobrem as garantias que dependem do banco: a transação que grava OS e estoque juntos (tudo ou nada),
+  o lock otimista, duas aprovações simultâneas, duas OS disputando as últimas unidades, os `CHECK` e
+  as chaves estrangeiras.
 - Usam o banco `techchallenge_test` (ou `TEST_DATABASE_URL`), que recebe as migrations antes da suíte.
   Por segurança, a suíte só roda em banco cujo nome termina em `_test`.
 
@@ -793,7 +852,7 @@ A configuração tem duas peças, uma redundante de propósito:
 | `pnpm migrate:deploy`  | Aplica migrations pendentes sem criar novas (produção/CI)     |
 | `pnpm studio`          | Abre o Prisma Studio para navegar pelos dados                 |
 
-Models atuais: `User`, `Customer`, `Vehicle`, `Part`, `StockMovement` e `Service`, com uma migration versionada para cada um.
+Models atuais: `User`, `Customer`, `Vehicle`, `Part`, `StockMovement`, `Service` e a Ordem de Serviço (`ServiceOrder`, `OrderServiceItem`, `OrderPartItem` e `OrderStatusChange`), com migrations versionadas.
 
 ---
 

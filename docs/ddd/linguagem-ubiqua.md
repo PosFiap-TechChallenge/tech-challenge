@@ -9,20 +9,47 @@ mantém sua seção. A coluna **No código** mostra o nome usado na implementaç
 
 Vocabulário compartilhado por todos os contextos da oficina.
 
-| Termo                 | Definição                                                                                     |
-| --------------------- | --------------------------------------------------------------------------------------------- |
-| Ordem de Serviço (OS) | Registro que reúne um veículo, os serviços contratados, as peças aplicadas e o orçamento.     |
-| Cliente               | Pessoa física ou jurídica identificada por CPF ou CNPJ, dona de um ou mais veículos.          |
-| Veículo               | Automóvel identificado pela placa, sempre vinculado a um cliente.                             |
-| Serviço               | Item do catálogo da oficina com preço e tempo estimado, por exemplo troca de óleo.            |
-| Item de Serviço       | Serviço efetivamente incluído em uma OS, com preço congelado no momento da inclusão.          |
-| Peça                  | Item de estoque com quantidade disponível, reservada e mínima.                                |
-| Item de Peça          | Peça incluída em uma OS, com quantidade e preço congelado.                                    |
-| Orçamento             | Valor total calculado a partir dos itens de serviço e de peça, submetido ao cliente.          |
-| Reserva               | Quantidade de uma peça comprometida com uma OS aprovada, ainda não baixada do físico.         |
-| Consumo               | Baixa definitiva da peça no estoque, que ocorre na conclusão do serviço.                      |
-| Estoque mínimo        | Quantidade a partir da qual a peça precisa de ressuprimento (saldo menor ou igual ao mínimo). |
-| Tempo de execução     | Intervalo entre o início e a conclusão de um item de serviço.                                 |
+| Termo                 | Definição                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| Ordem de Serviço (OS) | Registro que reúne um veículo, os serviços contratados, as peças aplicadas e o orçamento.      |
+| Cliente               | Pessoa física ou jurídica identificada por CPF ou CNPJ, dona de um ou mais veículos.           |
+| Veículo               | Automóvel identificado pela placa, sempre vinculado a um cliente.                              |
+| Serviço               | Item do catálogo da oficina com preço e tempo estimado, por exemplo troca de óleo. (`Service`) |
+| Item de Serviço       | Serviço efetivamente incluído em uma OS, com preço congelado no momento da inclusão.           |
+| Peça                  | Item de estoque com quantidade disponível, reservada e mínima.                                 |
+| Item de Peça          | Peça incluída em uma OS, com quantidade e preço congelado.                                     |
+| Orçamento             | Valor total calculado a partir dos itens de serviço e de peça, submetido ao cliente.           |
+| Reserva               | Quantidade de uma peça comprometida com uma OS aprovada, ainda não baixada do físico.          |
+| Consumo               | Baixa definitiva da peça no estoque, que ocorre na conclusão do serviço.                       |
+| Estoque mínimo        | Quantidade a partir da qual a peça precisa de ressuprimento (saldo menor ou igual ao mínimo).  |
+| Tempo de execução     | Intervalo entre o início e a conclusão de um item de serviço.                                  |
+
+---
+
+## Ordem de Serviço
+
+Detalhes do modelo em [Ordem de Serviço](./ordem-de-servico.md).
+
+| Termo                 | Definição                                                                                              | No código                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| Ordem de Serviço (OS) | Agregado do contexto: veículo do cliente, itens de serviço e de peça, orçamento e histórico de status. | `ServiceOrder`                            |
+| Recebida              | Status inicial: o veículo chegou e a OS foi aberta.                                                    | `RECEIVED`                                |
+| Em diagnóstico        | O mecânico avalia o veículo; serviços e peças ainda podem mudar.                                       | `IN_DIAGNOSIS`                            |
+| Aguardando aprovação  | O orçamento foi enviado ao cliente e espera a decisão.                                                 | `AWAITING_APPROVAL`                       |
+| Em execução           | Orçamento aprovado: peças reservadas e serviço em andamento.                                           | `IN_EXECUTION`                            |
+| Finalizada            | Serviço concluído e peças consumidas, esperando a retirada.                                            | `FINISHED`                                |
+| Entregue              | O veículo foi devolvido ao cliente. Status final.                                                      | `DELIVERED`                               |
+| Diagnóstico           | Avaliação do veículo que define os serviços e as peças necessários.                                    | `startDiagnosis`, `DiagnosisStartedEvent` |
+| Orçamento gerado      | Total calculado automaticamente a partir dos itens e congelado no envio.                               | `Budget`, `budgetTotal`                   |
+| Orçamento enviado     | Orçamento apresentado ao cliente; a OS passa a aguardar aprovação.                                     | `sendBudget`, `BudgetSentEvent`           |
+| Aprovação             | Decisão do cliente (registrada pelo atendente) que inicia a execução e reserva as peças.               | `approveBudget`, `BudgetApprovedEvent`    |
+| Rejeição              | Decisão contrária: a OS volta ao diagnóstico para revisar itens e gerar novo orçamento.                | `rejectBudget`, `BudgetRejectedEvent`     |
+| Início da execução    | Momento em que o serviço começa, na aprovação; abre a contagem do tempo de execução.                   | `ExecutionStartedEvent`, `startedAt`      |
+| Conclusão             | Momento em que o serviço termina; fecha o tempo de execução e consome as peças.                        | `finish`, `finishedAt`                    |
+| Entrega               | Devolução do veículo ao cliente.                                                                       | `deliver`, `VehicleDeliveredEvent`        |
+| Histórico de status   | Registro de cada status por que a OS passou, com a data. É a linha do tempo mostrada ao cliente.       | `history`, `StatusChange`                 |
+| Acompanhamento        | Consulta pública do andamento da OS pelo cliente, com o id da OS e o seu CPF/CNPJ.                     | `GET /tracking/:id`                       |
+| Unidade de trabalho   | Operação que grava vários agregados numa só transação: ou tudo é confirmado, ou nada.                  | `UnitOfWork`                              |
 
 ---
 

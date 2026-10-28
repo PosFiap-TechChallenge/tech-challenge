@@ -75,7 +75,7 @@ consistência: todo comando passa por ele, e ele garante as invariantes abaixo a
 7. Itens em `UN` não aceitam frações (`FRACTIONAL_QUANTITY_NOT_ALLOWED`).
 8. A unidade de medida não é editável, porque mudaria o significado do saldo (4 L virariam 4 ML).
 9. Só pode ser excluída a peça cadastrada por engano, que tem apenas o estoque inicial. Peça com qualquer
-   outra movimentação é preservada (`PART_HAS_STOCK_HISTORY`).
+   outra movimentação, ou que consta em uma Ordem de Serviço, é preservada (`PART_HAS_STOCK_HISTORY`).
 
 As invariantes 1 e 9 também são garantidas pelo banco, com `CHECK` constraints e chave estrangeira,
 como última barreira.
@@ -92,6 +92,7 @@ como última barreira.
 | Conflito de versão em reserva/entrada/consumo   | Retentativa automática (até 5, com espera aleatória). As regras são reavaliadas sobre o saldo novo.        |
 | Conflito de versão em ajuste                    | **Sem retentativa**: a contagem foi feita sobre o saldo antigo, então o administrador deve recontar (409). |
 | Lotes concorrentes                              | Linhas gravadas em ordem de id, para evitar deadlock entre transações.                                     |
+| Reserva ou consumo disparado pela OS            | Entram na **transação da OS** (unidade de trabalho): OS e estoque são confirmados ou desfeitos juntos.     |
 | Schemas (validação do agregado e base dos DTOs) | `src/domain/schemas/{Part,StockMovement,Quantity,Money}Schema.ts`                                          |
 | Eventos de domínio                              | Publicados **depois** do commit. Falha de um handler é registrada e não desfaz a operação.                 |
 
@@ -116,14 +117,16 @@ Reservar, liberar e consumir **não têm rota**: no modelo, são disparados por 
 
 ## 5. Contrato com a Ordem de Serviço
 
-O contexto de Ordem de Serviço aciona o estoque pelos casos de uso em lote, resolvidos pela injeção de
-dependência:
+A Ordem de Serviço aciona o estoque pelo `OrderStockService`, dentro da própria unidade de trabalho: a
+reserva (ou o consumo) e a mudança de status da OS são gravados na **mesma transação**. Os casos de uso em
+lote abaixo continuam disponíveis para uso avulso, mas cada um confirma a própria transação e por isso não
+servem para a OS.
 
-| Evento da OS        | Caso de uso                      | Símbolo (`TYPES`)                      |
-| ------------------- | -------------------------------- | -------------------------------------- |
-| Orçamento aprovado  | `ReservePartsUseCase`            | `TYPES.ReservePartsUseCase`            |
-| Orçamento cancelado | `ReleasePartReservationsUseCase` | `TYPES.ReleasePartReservationsUseCase` |
-| Serviço concluído   | `ConsumePartsUseCase`            | `TYPES.ConsumePartsUseCase`            |
+| Evento da OS        | Quem aciona o estoque                                | Caso de uso em lote (avulso)     |
+| ------------------- | ---------------------------------------------------- | -------------------------------- |
+| Orçamento aprovado  | `ApproveBudgetUseCase` → `OrderStockService.reserve` | `ReservePartsUseCase`            |
+| Serviço concluído   | `FinishServiceUseCase` → `OrderStockService.consume` | `ConsumePartsUseCase`            |
+| Orçamento cancelado | (a OS ainda não tem cancelamento)                    | `ReleasePartReservationsUseCase` |
 
 ```ts
 await reserveParts.execute({
@@ -134,9 +137,10 @@ await reserveParts.execute({
 });
 ```
 
-- Cada peça aparece **uma vez** por lote. Quem chama agrega as quantidades antes.
+- Cada peça aparece **uma vez** por lote. A OS agrega as quantidades: incluir a mesma peça de novo soma ao item.
 - Em erro de regra, a mensagem identifica a peça: `Peca FILTRO-01: Saldo disponivel insuficiente...`.
-- O orçamento deve **copiar** `unitPrice` no momento em que é gerado. O preço da peça pode mudar depois.
+- O **Item de Peça copia** `unitPrice` no momento em que a peça é incluída na OS. O preço da peça pode mudar depois.
+- Ao incluir a peça na OS, `Part.assertAvailable` confere o disponível sem reservar. A reserva só ocorre na aprovação.
 
 ---
 

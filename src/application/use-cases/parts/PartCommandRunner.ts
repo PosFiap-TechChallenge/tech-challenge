@@ -53,12 +53,10 @@ export class PartCommandRunner {
     const maxAttempts = retryOnConcurrentUpdate ? PART_COMMAND_MAX_ATTEMPTS : 1;
 
     for (let attempt = 1; ; attempt++) {
-      const parts = await Promise.all(ids.map((id) => this.load(id)));
-
-      await command(parts);
+      let parts: Part[];
 
       try {
-        await this.partRepository.updateAll(parts);
+        parts = await this.apply(ids, command);
       } catch (error) {
         if (error instanceof ConcurrentUpdateError && attempt < maxAttempts) {
           await sleep(Math.random() * RETRY_JITTER_MS * attempt);
@@ -75,6 +73,24 @@ export class PartCommandRunner {
 
       return parts;
     }
+  }
+
+  /**
+   * Carrega, aplica e grava sem publicar eventos nem repetir em conflito de versao.
+   * Para quem ja controla a transacao e a retentativa (ex.: a Ordem de Servico, que
+   * grava OS e estoque juntos); `updateAll` entra na transacao em andamento.
+   */
+  async apply(
+    ids: readonly PartId[],
+    command: (parts: Part[]) => void | Promise<void>,
+  ): Promise<Part[]> {
+    const parts = await Promise.all(ids.map((id) => this.load(id)));
+
+    await command(parts);
+
+    await this.partRepository.updateAll(parts);
+
+    return parts;
   }
 
   private async load(id: PartId): Promise<Part> {

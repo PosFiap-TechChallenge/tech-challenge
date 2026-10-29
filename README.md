@@ -111,7 +111,7 @@ revisar os itens. Diagrama completo em [Ordem de Serviço](docs/ddd/ordem-de-ser
 | Vídeo da entrega (YouTube, público)       | 🔗 pendente <!-- TODO: link do vídeo -->                                                                                              |
 | Documentação DDD (Miro)                   | 🔗 pendente <!-- TODO: link público do board no Miro -->                                                                              |
 | Documentação DDD exportada no repositório | [`docs/ddd/`](docs/ddd/) — ver [seção 7](#7-documentação-ddd)                                                                         |
-| Relatório de análise de vulnerabilidades  | 🔗 pendente <!-- TODO: docs/security/vulnerability-report.md -->                                                                      |
+| Relatório de análise de vulnerabilidades  | [`docs/security/vulnerability-report.md`](docs/security/vulnerability-report.md)                                                                      |
 | Documentação da API (Swagger)             | `http://localhost:3000/docs` com a aplicação rodando ([seção 10](#10-endpoints-e-documentação-da-api-swagger))                        |
 | Evidência de cobertura de testes          | Artefato `coverage-report` em cada execução do [CI](https://github.com/PosFiap-TechChallenge/tech-challenge/actions/workflows/ci.yml) |
 
@@ -612,8 +612,7 @@ Toda mudança na `main` chega por pull request, com o CI verde como requisito pa
 
 ## 12. Segurança e análise de vulnerabilidades
 
-Relatório completo da análise de vulnerabilidades: 🔗 pendente
-<!-- TODO: link para docs/security/vulnerability-report.md -->
+Relatório completo da análise de vulnerabilidades: [`docs/security/vulnerability-report.md`](docs/security/vulnerability-report.md)
 
 Controles já aplicados na aplicação:
 

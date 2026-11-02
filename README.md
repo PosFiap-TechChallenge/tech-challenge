@@ -857,10 +857,6 @@ Models atuais: `User`, `Customer`, `Vehicle`, `Part`, `StockMovement`, `Service`
 
 ## 16. Equipe
 
-<!-- TODO: preencher com os dados de todos os integrantes (também exigidos na primeira página do PDF de entrega). -->
+**Grupo:** 74 · **Curso:** SOAT — Software Architecture · **Fase:** 1
 
-| Nome        | RM          | Usuário no Discord |
-| ----------- | ----------- | ------------------ |
-| 🔗 pendente | 🔗 pendente | 🔗 pendente        |
-
-**Grupo:** 🔗 pendente · **Curso:** SOAT — Software Architecture · **Fase:** 1
+Nomes, RM e usuários no Discord dos integrantes constam no PDF de entrega.

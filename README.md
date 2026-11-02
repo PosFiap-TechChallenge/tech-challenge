@@ -109,9 +109,9 @@ revisar os itens. Diagrama completo em [Ordem de Serviço](docs/ddd/ordem-de-ser
 | Repositório                               | https://github.com/PosFiap-TechChallenge/tech-challenge                                                                               |
 | Branch e commit da entrega final          | 🔗 pendente <!-- TODO: branch e hash do commit avaliado -->                                                                           |
 | Vídeo da entrega (YouTube, público)       | 🔗 pendente <!-- TODO: link do vídeo -->                                                                                              |
-| Documentação DDD (Miro)                   | [Board no Miro](https://miro.com/app/board/uXjVMfgUZMI=/?share_link_id=586687138595)                                                                              |
+| Documentação DDD (Miro)                   | [Board no Miro](https://miro.com/app/board/uXjVMfgUZMI=/?share_link_id=586687138595)                                                  |
 | Documentação DDD exportada no repositório | [`docs/ddd/`](docs/ddd/) — ver [seção 7](#7-documentação-ddd)                                                                         |
-| Relatório de análise de vulnerabilidades  | [`docs/security/vulnerability-report.md`](docs/security/vulnerability-report.md)                                                                      |
+| Relatório de análise de vulnerabilidades  | [`docs/security/vulnerability-report.md`](docs/security/vulnerability-report.md)                                                      |
 | Documentação da API (Swagger)             | `http://localhost:3000/docs` com a aplicação rodando ([seção 10](#10-endpoints-e-documentação-da-api-swagger))                        |
 | Evidência de cobertura de testes          | Artefato `coverage-report` em cada execução do [CI](https://github.com/PosFiap-TechChallenge/tech-challenge/actions/workflows/ci.yml) |
 
@@ -308,9 +308,48 @@ entidades, objetos de valor, bounded contexts e a linguagem ubíqua.
 
 - Node.js 22+ (o projeto foi desenvolvido em v24)
 - pnpm 10.10.0 (`corepack enable` já resolve — o campo `packageManager` do `package.json` fixa a versão)
-- Docker + Docker Compose (para o PostgreSQL)
+- Docker + Docker Compose
 
-### Passo a passo
+### Escolha como rodar
+
+Há dois caminhos, e os dois exigem os pré-requisitos acima, porque as migrations e o usuário `ADMIN`
+são aplicados a partir da sua máquina:
+
+| Caminho                                                             | API roda em | Indicado para                 |
+| ------------------------------------------------------------------- | ----------- | ----------------------------- |
+| [A. PostgreSQL + API em container](#a-postgresql--api-em-container) | Container   | Avaliar o projeto             |
+| [B. Desenvolvimento local](#b-desenvolvimento-local)                | Sua máquina | Alterar o código (hot reload) |
+
+> **`docker compose up` não prepara o banco.** Ele sobe os containers, e a API aparece como `healthy`,
+> mas o banco fica vazio até você rodar as migrations e o seed. Sem esses passos, o login responde 500.
+
+### A. PostgreSQL + API em container
+
+```bash
+# 1. Variáveis de ambiente
+cp .env.example .env
+
+# 2. Dependências (necessárias para as migrations e o seed)
+pnpm install
+
+# 3. Prisma Client (obrigatório: o pnpm install não gera o client)
+pnpm prisma:generate
+
+# 4. Sobe o PostgreSQL e a API, e espera os dois ficarem saudáveis
+pnpm docker:up
+
+# 5. Migrations (cria as tabelas)
+pnpm migrate:deploy
+
+# 6. Usuário ADMIN inicial (usa ADMIN_NAME/ADMIN_EMAIL/ADMIN_PASSWORD do .env)
+pnpm seed:admin
+```
+
+Os passos 5 e 6 são necessários na primeira subida e sempre que o volume do banco for apagado. Nas
+subidas seguintes, basta `pnpm docker:up`. Repetir os dois é seguro: as migrations já aplicadas são
+ignoradas, e o seed não recria um `ADMIN` existente.
+
+### B. Desenvolvimento local
 
 ```bash
 # 1. Variáveis de ambiente
@@ -319,23 +358,58 @@ cp .env.example .env
 # 2. Dependências
 pnpm install
 
-# 3. Banco de dados
-docker compose up -d database        # só o PostgreSQL (recomendado em dev)
-# ou
-pnpm docker:up                       # PostgreSQL + API, ambos em container
+# 3. Prisma Client (obrigatório: o pnpm install não gera o client)
+pnpm prisma:generate
 
-# 4. Migrations (cria as tabelas)
+# 4. Sobe só o PostgreSQL
+docker compose up -d database
+
+# 5. Migrations (cria as tabelas)
 pnpm migrate:deploy
 
-# 5. Usuário ADMIN inicial (usa ADMIN_NAME/ADMIN_EMAIL/ADMIN_PASSWORD do .env; idempotente)
+# 6. Usuário ADMIN inicial (usa ADMIN_NAME/ADMIN_EMAIL/ADMIN_PASSWORD do .env)
 pnpm seed:admin
 
-# 6. API em modo desenvolvimento (hot reload)
+# 7. API em modo desenvolvimento (hot reload)
 pnpm dev
 ```
 
+> Não use os caminhos A e B ao mesmo tempo: as duas APIs usam a porta `3000`. Para trocar de A para B,
+> rode `pnpm docker:down` e siga a partir do passo 4 de B.
+
 > Ao alterar o `schema.prisma` durante o desenvolvimento, use `pnpm migrate` para criar uma nova
-> migration.
+> migration e `pnpm prisma:generate` para atualizar o client.
+
+### Conferindo se funcionou
+
+```bash
+# Deve responder 200
+curl -i http://localhost:3000/health
+
+# Deve responder 200 e devolver um accessToken
+curl -i -X POST http://localhost:3000/auth/sign-in \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@oficina.com", "password": "TroqueEssaSenha123"}'
+```
+
+### Encerrando
+
+```bash
+pnpm docker:down    # derruba os containers e mantém os dados
+pnpm docker:clean   # derruba os containers e APAGA os dados: depois, refaça as migrations e o seed
+```
+
+### Problemas comuns
+
+| Sintoma                                                                           | Causa                                     | Solução                                                                              |
+| --------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| `does not provide an export named 'PrismaClient'` no seed, no `dev` ou nos testes | Prisma Client não foi gerado              | `pnpm prisma:generate`                                                               |
+| Login responde 500, com a API `healthy`                                           | Migrations não foram aplicadas            | `pnpm migrate:deploy`                                                                |
+| Login responde 401 com as credenciais de demonstração                             | Usuário `ADMIN` não foi criado            | `pnpm seed:admin`                                                                    |
+| `tsx: not found` ao rodar o seed dentro do container                              | O `tsx` não vai para a imagem de produção | Rode `pnpm seed:admin` na sua máquina                                                |
+| `Cannot find matching keyid` ao usar o `pnpm`                                     | `corepack` desatualizado                  | `npm install -g corepack@latest` e `corepack enable`                                 |
+| Porta `5432` ocupada                                                              | Outro PostgreSQL em execução              | No `.env`, altere `DB_PORT` **e** a porta em `DATABASE_URL`, que não é derivada dela |
+| Porta `3000` ocupada                                                              | Outra aplicação em execução               | Altere `PORT` no `.env`                                                              |
 
 ### URLs
 
@@ -349,6 +423,8 @@ pnpm dev
 > diagnosticar nada.
 
 ### Rodando o build de produção localmente
+
+Com o banco preparado, como no [caminho B](#b-desenvolvimento-local):
 
 ```bash
 pnpm build     # gera dist/main.js
@@ -550,6 +626,8 @@ Todas as respostas de erro seguem o formato `{ "error": { "code", "message", "de
 O desafio exige testes automatizados com **cobertura mínima de 80% nos domínios críticos**. Essa
 regra é aplicada automaticamente no CI.
 
+Antes de rodar os testes, é preciso ter executado `pnpm install` e `pnpm prisma:generate`.
+
 ```bash
 pnpm test            # suíte completa
 pnpm test:coverage   # suíte + cobertura, com o mínimo de 80% aplicado
@@ -691,6 +769,9 @@ Três detalhes importantes:
 
 Dentro da rede do compose o host do banco **não** é `localhost`, e sim o nome do serviço. Por isso o
 serviço `api` sobrescreve `DATABASE_URL` e `DB_HOST` apontando para `database`.
+
+O compose não aplica as migrations nem cria o usuário `ADMIN`: depois da primeira subida, siga o
+[caminho A](#a-postgresql--api-em-container).
 
 ```bash
 pnpm docker:up      # sobe tudo e espera ficar saudável

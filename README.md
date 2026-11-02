@@ -109,7 +109,7 @@ revisar os itens. Diagrama completo em [Ordem de Serviço](docs/ddd/ordem-de-ser
 | Repositório                               | https://github.com/PosFiap-TechChallenge/tech-challenge                                                                               |
 | Branch e commit da entrega final          | 🔗 pendente <!-- TODO: branch e hash do commit avaliado -->                                                                           |
 | Vídeo da entrega (YouTube, público)       | 🔗 pendente <!-- TODO: link do vídeo -->                                                                                              |
-| Documentação DDD (Miro)                   | 🔗 pendente <!-- TODO: link público do board no Miro -->                                                                              |
+| Documentação DDD (Miro)                   | [Board no Miro](https://miro.com/app/board/uXjVMfgUZMI=/?share_link_id=586687138595)                                                                              |
 | Documentação DDD exportada no repositório | [`docs/ddd/`](docs/ddd/) — ver [seção 7](#7-documentação-ddd)                                                                         |
 | Relatório de análise de vulnerabilidades  | [`docs/security/vulnerability-report.md`](docs/security/vulnerability-report.md)                                                                      |
 | Documentação da API (Swagger)             | `http://localhost:3000/docs` com a aplicação rodando ([seção 10](#10-endpoints-e-documentação-da-api-swagger))                        |
@@ -261,7 +261,7 @@ src/
 
 ## 7. Documentação DDD
 
-Board completo no Miro: 🔗 pendente <!-- TODO: link público do Miro (acessível sem pedido de permissão) -->
+Board completo no Miro: [abrir no Miro](https://miro.com/app/board/uXjVMfgUZMI=/?share_link_id=586687138595)
 
 Versões exportadas ficam em [`docs/ddd/`](docs/ddd/):
 

@@ -310,7 +310,24 @@ entidades, objetos de valor, bounded contexts e a linguagem ubíqua.
 - pnpm 10.10.0 (`corepack enable` já resolve — o campo `packageManager` do `package.json` fixa a versão)
 - Docker + Docker Compose (para o PostgreSQL)
 
-### Passo a passo
+Para rodar tudo em container, basta o Docker: Node.js e pnpm só são necessários para o desenvolvimento
+local.
+
+> Se o `pnpm` falhar com `Cannot find matching keyid`, a versão do `corepack` que acompanha o Node está
+> desatualizada. Atualize com `npm install -g corepack@latest` e rode `corepack enable` de novo.
+
+### Execução com Docker (recomendado para avaliar o projeto)
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Esse único comando sobe o PostgreSQL, aplica as migrations, cria o usuário `ADMIN`
+([credenciais](#credenciais-de-demonstração)) e inicia a API. Se as portas `3000` ou `5432` estiverem
+ocupadas, altere `PORT` ou `DB_PORT` no `.env`.
+
+### Desenvolvimento local
 
 ```bash
 # 1. Variáveis de ambiente
@@ -320,9 +337,7 @@ cp .env.example .env
 pnpm install
 
 # 3. Banco de dados
-docker compose up -d database        # só o PostgreSQL (recomendado em dev)
-# ou
-pnpm docker:up                       # PostgreSQL + API, ambos em container
+docker compose up -d database        # só o PostgreSQL
 
 # 4. Migrations (cria as tabelas)
 pnpm migrate:deploy
@@ -363,8 +378,8 @@ As APIs administrativas exigem um **JWT** no header `Authorization: Bearer <toke
 
 ### Credenciais de demonstração
 
-O comando `pnpm seed:admin` cria o usuário `ADMIN` inicial a partir do `.env`. Com os valores do
-`.env.example`:
+O usuário `ADMIN` inicial é criado a partir do `.env`: pelo serviço `migrate` no `docker compose up`,
+ou por `pnpm seed:admin` no desenvolvimento local. Com os valores do `.env.example`:
 
 | Papel   | E-mail              | Senha                |
 | ------- | ------------------- | -------------------- |
@@ -675,10 +690,11 @@ imagem final leva apenas o bundle e as dependências de produção.
 
 Três detalhes importantes:
 
-- A pasta `src/infrastructure/database/prisma` é copiada para a imagem final. Sem ela o comando
-  `pnpm migrate:deploy` não teria schema nem migrations para aplicar dentro do container.
-- O pacote `prisma` (a CLI) está em `dependencies`, não em `devDependencies`, justamente para que
-  `migrate:deploy` funcione na imagem de produção.
+- A pasta `src/infrastructure/database/prisma` é copiada para a imagem final. Sem ela o serviço
+  `migrate` não teria schema nem migrations para aplicar dentro do container.
+- O pacote `prisma` (a CLI) está em `dependencies`, não em `devDependencies`, justamente para que as
+  migrations funcionem na imagem de produção. O seed do `ADMIN` é compilado no build (`dist/seedAdmin.js`)
+  porque o `tsx` não vai para essa imagem.
 - Há um `HEALTHCHECK` batendo em `/health`, o que faz o `--wait` do `pnpm docker:up` esperar a API
   ficar de fato pronta, e não apenas "em execução".
 
@@ -687,10 +703,11 @@ Três detalhes importantes:
 | Serviço    | Descrição                                                                                                                                                                 |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `database` | `postgres:16-alpine`, credenciais vindas do `.env`, volume nomeado `techchallenge-postgres-data` para os dados sobreviverem a um `down`, e `healthcheck` com `pg_isready` |
-| `api`      | Construída a partir do `Dockerfile`, lê o `.env` via `env_file` e só inicia quando o banco está saudável (`depends_on` com `condition: service_healthy`)                  |
+| `migrate`  | Roda uma vez e encerra, com a mesma imagem da API: aplica as migrations e cria o usuário `ADMIN` (idempotente, pode rodar a cada subida)                                  |
+| `api`      | Construída a partir do `Dockerfile`, lê o `.env` via `env_file` e só inicia depois que o `migrate` termina com sucesso (`condition: service_completed_successfully`)      |
 
 Dentro da rede do compose o host do banco **não** é `localhost`, e sim o nome do serviço. Por isso o
-serviço `api` sobrescreve `DATABASE_URL` e `DB_HOST` apontando para `database`.
+serviços `migrate` e `api` sobrescrevem `DATABASE_URL` e `DB_HOST` apontando para `database`.
 
 ```bash
 pnpm docker:up      # sobe tudo e espera ficar saudável

@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "tsx watch --env-file=.env src/infrastructure/server/main.ts",
-    "build": "tsup src/infrastructure/server/main.ts --format esm --out-dir dist --clean",
+    "build": "tsup --entry.main src/infrastructure/server/main.ts --entry.seedAdmin src/infrastructure/database/seed/seedAdmin.ts --format esm --out-dir dist --clean",
     "start": "node --env-file=.env dist/main.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

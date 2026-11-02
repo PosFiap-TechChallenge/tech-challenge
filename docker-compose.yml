@@ -1,3 +1,15 @@
+x-api-base: &api-base
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: runner
+  env_file:
+    - .env
+  environment:
+    DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@database:5432/${DB_DATABASE}?schema=public
+    DB_HOST: database
+    DB_PORT: 5432
+
 services:
   database:
     image: postgres:16-alpine
@@ -18,24 +30,31 @@ services:
       retries: 10
       start_period: 10s
 
+  # Prepara o banco antes da API: aplica as migrations e cria o usuario ADMIN (idempotente).
+  migrate:
+    <<: *api-base
+    container_name: techchallenge-migrate
+    command:
+      - sh
+      - -c
+      - ./node_modules/.bin/prisma migrate deploy --schema src/infrastructure/database/prisma/schema.prisma && node dist/seedAdmin.js
+    healthcheck:
+      disable: true
+    depends_on:
+      database:
+        condition: service_healthy
+
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runner
+    <<: *api-base
     container_name: techchallenge-api
     restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@database:5432/${DB_DATABASE}?schema=public
-      DB_HOST: database
-      DB_PORT: 5432
     ports:
       - '${PORT}:${PORT}'
     depends_on:
       database:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   techchallenge-postgres-data:

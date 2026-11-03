@@ -182,7 +182,7 @@ Infrastructure  ──▶  Application  ──▶  Domain
 A **regra de dependência** é o coração do desenho: as setas apontam sempre para dentro. O que é
 estável (regra de negócio) nunca depende do que é volátil (banco, framework, HTTP).
 
-<!-- TODO: incluir o diagrama de arquitetura (ex.: docs/arquitetura.png) se o time produzir um. -->
+Os diagramas C4 (contexto, containers e componentes) estão em [`docs/ddd/diagramas.pdf`](docs/ddd/diagramas.pdf).
 
 #### `src/domain` — o núcleo
 
@@ -271,7 +271,7 @@ Versões exportadas ficam em [`docs/ddd/`](docs/ddd/):
 | Event Storming — acompanhamento da Ordem de Serviço           | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#12-acompanhamento-da-ordem-de-serviço) | ✅ Texto; PDF 🔗 pendente |
 | Event Storming — gestão de peças e insumos                    | [`docs/ddd/gestao-de-pecas-e-insumos.md`](docs/ddd/gestao-de-pecas-e-insumos.md)                     | ✅ Texto; PDF 🔗 pendente |
 | Catálogo de serviços                                          | [`docs/ddd/catalogo-de-servicos.md`](docs/ddd/catalogo-de-servicos.md)                               | ✅                        |
-| Diagramas (agregados, entidades, objetos de valor, contextos) | [`docs/ddd/diagramas.pdf`](docs/ddd/diagramas.pdf)                                                   | 🔗 pendente               |
+| Diagramas C4 (contexto, containers e componentes)             | [`docs/ddd/diagramas.pdf`](docs/ddd/diagramas.pdf)                                                   | ✅                        |
 | Linguagem ubíqua e glossário                                  | [`docs/ddd/linguagem-ubiqua.md`](docs/ddd/linguagem-ubiqua.md)                                       | ✅                        |
 
 <!-- TODO: marcar cada artefato como concluído quando o arquivo estiver em docs/ddd/. -->

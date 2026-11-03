@@ -267,9 +267,10 @@ Versões exportadas ficam em [`docs/ddd/`](docs/ddd/):
 
 | Artefato                                                      | Arquivo                                                                                              | Status                    |
 | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------- |
-| Event Storming — criação da Ordem de Serviço                  | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#11-criação-da-ordem-de-serviço)        | ✅ Texto; PDF 🔗 pendente |
-| Event Storming — acompanhamento da Ordem de Serviço           | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#12-acompanhamento-da-ordem-de-serviço) | ✅ Texto; PDF 🔗 pendente |
-| Event Storming — gestão de peças e insumos                    | [`docs/ddd/gestao-de-pecas-e-insumos.md`](docs/ddd/gestao-de-pecas-e-insumos.md)                     | ✅ Texto; PDF 🔗 pendente |
+| Event Storming — criação da Ordem de Serviço                  | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#11-criação-da-ordem-de-serviço)        | ✅                        |
+| Event Storming — acompanhamento da Ordem de Serviço           | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#12-acompanhamento-da-ordem-de-serviço) | ✅                        |
+| Event Storming — gestão de peças e insumos                    | [`docs/ddd/gestao-de-pecas-e-insumos.md`](docs/ddd/gestao-de-pecas-e-insumos.md)                     | ✅                        |
+| Event Storming (PDF exportado do Miro)                        | [`docs/ddd/event-storming.pdf`](docs/ddd/event-storming.pdf)                                         | ✅                        |
 | Catálogo de serviços                                          | [`docs/ddd/catalogo-de-servicos.md`](docs/ddd/catalogo-de-servicos.md)                               | ✅                        |
 | Diagramas C4 (contexto, containers e componentes)             | [`docs/ddd/diagramas.pdf`](docs/ddd/diagramas.pdf)                                                   | ✅                        |
 | Linguagem ubíqua e glossário                                  | [`docs/ddd/linguagem-ubiqua.md`](docs/ddd/linguagem-ubiqua.md)                                       | ✅                        |

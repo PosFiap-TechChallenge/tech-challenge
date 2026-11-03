@@ -7,17 +7,17 @@ Documentação DDD do catálogo de serviços da oficina. Termos em **negrito** e
 
 | Fluxo    | Ator                                  | Comando                       | Evento                    |
 | -------- | ------------------------------------- | ----------------------------- | ------------------------- |
-| Cadastro | 🟨 Administrador                      | 🟦 Cadastrar Serviço          | 🟧 Serviço registrado     |
-| Edição   | 🟨 Administrador                      | 🟦 Atualizar Serviço          | — (sem evento de domínio) |
-| Remoção  | 🟨 Administrador                      | 🟦 Remover Serviço            | —                         |
-| Consulta | 🟨 Atendente, Mecânico, Administrador | 🟦 Listar / Detalhar Serviços | —                         |
+| Cadastro | 🟩 Administrador                      | 🟦 Cadastrar Serviço          | 🟨 Serviço registrado     |
+| Edição   | 🟩 Administrador                      | 🟦 Atualizar Serviço          | — (sem evento de domínio) |
+| Remoção  | 🟩 Administrador                      | 🟦 Remover Serviço            | —                         |
+| Consulta | 🟩 Atendente, Mecânico, Administrador | 🟦 Listar / Detalhar Serviços | —                         |
 
 Política 🟪: _sempre que um **Serviço** é incluído em uma OS, copiar preço e tempo para o **Item de Serviço**_
 (`ServiceOrder.addService`, no contexto da [Ordem de Serviço](./ordem-de-servico.md)).
 
 ## 2. Modelo de domínio
 
-Agregado 🟩 `Service` (`src/domain/aggregates/Service.ts`).
+Agregado 🟧 `Service` (`src/domain/aggregates/Service.ts`).
 
 | Atributo           | Tipo    | Significado                                |
 | ------------------ | ------- | ------------------------------------------ |

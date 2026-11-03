@@ -104,16 +104,16 @@ revisar os itens. Diagrama completo em [Ordem de Serviço](docs/ddd/ordem-de-ser
 
 ## 3. Links da entrega
 
-| Item                                      | Link                                                                                                                                  |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Repositório                               | https://github.com/PosFiap-TechChallenge/tech-challenge                                                                               |
-| Branch e commit da entrega final          | 🔗 pendente <!-- TODO: branch e hash do commit avaliado -->                                                                           |
-| Vídeo da entrega (YouTube, público)       | 🔗 pendente <!-- TODO: link do vídeo -->                                                                                              |
-| Documentação DDD (Miro)                   | [Board no Miro](https://miro.com/app/board/uXjVMfgUZMI=/?share_link_id=586687138595)                                                  |
-| Documentação DDD exportada no repositório | [`docs/ddd/`](docs/ddd/) — ver [seção 7](#7-documentação-ddd)                                                                         |
-| Relatório de análise de vulnerabilidades  | [`docs/security/vulnerability-report.md`](docs/security/vulnerability-report.md)                                                      |
-| Documentação da API (Swagger)             | `http://localhost:3000/docs` com a aplicação rodando ([seção 10](#10-endpoints-e-documentação-da-api-swagger))                        |
-| Evidência de cobertura de testes          | Artefato `coverage-report` em cada execução do [CI](https://github.com/PosFiap-TechChallenge/tech-challenge/actions/workflows/ci.yml) |
+| Item                                      | Link                                                                                                                                                                                                     |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repositório                               | https://github.com/PosFiap-TechChallenge/tech-challenge                                                                                                                                                  |
+| Branch e commit da entrega final          | 🔗 pendente <!-- TODO: branch e hash do commit avaliado -->                                                                                                                                              |
+| Vídeo da entrega (YouTube, público)       | 🔗 pendente <!-- TODO: link do vídeo -->                                                                                                                                                                 |
+| Documentação DDD (Miro)                   | [Board no Miro](https://miro.com/app/board/uXjVMfgUZMI=/?share_link_id=586687138595)                                                                                                                     |
+| Documentação DDD exportada no repositório | [`docs/ddd/`](docs/ddd/) — ver [seção 7](#7-documentação-ddd)                                                                                                                                            |
+| Relatório de análise de vulnerabilidades  | [`docs/security/vulnerability-report.md`](docs/security/vulnerability-report.md)                                                                                                                         |
+| Documentação da API (Swagger)             | `http://localhost:3000/docs` com a aplicação rodando ([seção 10](#10-endpoints-e-documentação-da-api-swagger))                                                                                           |
+| Evidência de cobertura de testes          | [`docs/evidencias/cobertura.txt`](docs/evidencias/cobertura.txt) e artefato `coverage-report` em cada execução do [CI](https://github.com/PosFiap-TechChallenge/tech-challenge/actions/workflows/ci.yml) |
 
 ---
 
@@ -188,12 +188,13 @@ Os diagramas C4 (contexto, containers e componentes) estão em [`docs/ddd/diagra
 
 Regras e conceitos de negócio puros.
 
-- **Agregados** (`Customer`, `Vehicle`, `User`) com factory `create`/`from` e o padrão
+- **Agregados** (`ServiceOrder`, `Customer`, `Vehicle`, `Service`, `Part`, `User`) com factory `create`/`from` e o padrão
   _always-valid_: um agregado nunca existe em estado inválido.
 - **Schemas de domínio** (`domain/schemas`): a fonte única do formato de cada agregado, espelhando a
   tabela no banco. A camada de aplicação deriva deles seus DTOs de entrada e saída.
-- **Objetos de valor** (`TaxDocument` para CPF/CNPJ, `LicensePlate`, `UserRole`).
-- **Eventos de domínio** (`CustomerCreatedEvent`, `VehicleRegisteredEvent`, `UserCreatedEvent`).
+- **Entidades** (`ServiceItem`, `PartItem`) e **objetos de valor** (`TaxDocument` para CPF/CNPJ,
+  `LicensePlate`, `Budget`, `OrderStatus`, `Money`, `Quantity`, `UserRole`).
+- **Eventos de domínio** (`ServiceOrderCreatedEvent`, `BudgetApprovedEvent`, `PartReservedEvent`, entre outros).
 - **Interfaces** de repositório e de providers — contratos, nunca implementações.
 - Não importa Express, Prisma ou Inversify; a única biblioteca usada é o Zod, para os schemas.
 
@@ -265,17 +266,15 @@ Board completo no Miro: [abrir no Miro](https://miro.com/app/board/uXjVMfgUZMI=/
 
 Versões exportadas ficam em [`docs/ddd/`](docs/ddd/):
 
-| Artefato                                                      | Arquivo                                                                                              | Status                    |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------- |
-| Event Storming — criação da Ordem de Serviço                  | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#11-criação-da-ordem-de-serviço)        | ✅                        |
-| Event Storming — acompanhamento da Ordem de Serviço           | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#12-acompanhamento-da-ordem-de-serviço) | ✅                        |
-| Event Storming — gestão de peças e insumos                    | [`docs/ddd/gestao-de-pecas-e-insumos.md`](docs/ddd/gestao-de-pecas-e-insumos.md)                     | ✅                        |
-| Event Storming (PDF exportado do Miro)                        | [`docs/ddd/event-storming.pdf`](docs/ddd/event-storming.pdf)                                         | ✅                        |
-| Catálogo de serviços                                          | [`docs/ddd/catalogo-de-servicos.md`](docs/ddd/catalogo-de-servicos.md)                               | ✅                        |
-| Diagramas C4 (contexto, containers e componentes)             | [`docs/ddd/diagramas.pdf`](docs/ddd/diagramas.pdf)                                                   | ✅                        |
-| Linguagem ubíqua e glossário                                  | [`docs/ddd/linguagem-ubiqua.md`](docs/ddd/linguagem-ubiqua.md)                                       | ✅                        |
-
-<!-- TODO: marcar cada artefato como concluído quando o arquivo estiver em docs/ddd/. -->
+| Artefato                                            | Arquivo                                                                                              | Status |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------ |
+| Event Storming — criação da Ordem de Serviço        | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#11-criação-da-ordem-de-serviço)        | ✅     |
+| Event Storming — acompanhamento da Ordem de Serviço | [`docs/ddd/ordem-de-servico.md`](docs/ddd/ordem-de-servico.md#12-acompanhamento-da-ordem-de-serviço) | ✅     |
+| Event Storming — gestão de peças e insumos          | [`docs/ddd/gestao-de-pecas-e-insumos.md`](docs/ddd/gestao-de-pecas-e-insumos.md)                     | ✅     |
+| Event Storming (PDF exportado do Miro)              | [`docs/ddd/event-storming.pdf`](docs/ddd/event-storming.pdf)                                         | ✅     |
+| Catálogo de serviços                                | [`docs/ddd/catalogo-de-servicos.md`](docs/ddd/catalogo-de-servicos.md)                               | ✅     |
+| Diagramas C4 (contexto, containers e componentes)   | [`docs/ddd/diagramas.pdf`](docs/ddd/diagramas.pdf)                                                   | ✅     |
+| Linguagem ubíqua e glossário                        | [`docs/ddd/linguagem-ubiqua.md`](docs/ddd/linguagem-ubiqua.md)                                       | ✅     |
 
 A documentação cobre: eventos de domínio, comandos, políticas e regras de negócio, atores, agregados,
 entidades, objetos de valor, bounded contexts e a linguagem ubíqua.
@@ -654,7 +653,7 @@ pnpm test:integration  # integração contra PostgreSQL real (exige o banco no a
 - Ficam fora da medição o bootstrap (`server/main.ts`), o seed e o schema/migrations do Prisma.
 - O relatório navegável é gerado em `coverage/index.html`.
 
-<!-- TODO: incluir o resumo/print da cobertura da versão de entrega (ex.: docs/evidencias/cobertura.png). -->
+Resumo da cobertura da versão de entrega: [`docs/evidencias/cobertura.txt`](docs/evidencias/cobertura.txt).
 
 ### Testes de integração
 
@@ -683,9 +682,8 @@ Roda em todo pull request e em todo push na `main`:
 Em paralelo, o job `integration` sobe um PostgreSQL 16 como serviço e roda `pnpm test:integration`
 contra o banco `techchallenge_test`.
 
-Toda mudança na `main` chega por pull request, com o CI verde como requisito para o merge.
-
-<!-- TODO: ativar a proteção da main no GitHub (Settings > Branches: PR obrigatório + status check "Typecheck e testes"). -->
+A `main` é protegida: toda mudança chega por pull request com pelo menos 1 aprovação, e force push e
+exclusão da branch são bloqueados. O CI roda em todo pull request.
 
 ---
 

@@ -8,24 +8,24 @@ estão definidos na [Linguagem Ubíqua](./linguagem-ubiqua.md).
 
 ## 1. Event Storming
 
-Legenda: 🟨 ator · 🟦 comando · 🟧 evento de domínio · 🟪 política · 🟩 agregado.
+Legenda: 🟩 ator · 🟦 comando · 🟨 evento de domínio · 🟪 política · 🟧 agregado.
 
 ### 1.1 Criação da Ordem de Serviço
 
-Atores: 🟨 **Cliente** e 🟨 **Atendente**. Agregados do quadro: 🟩 Cliente, 🟩 Veículo e 🟩 **Ordem de Serviço**.
+Atores: 🟩 **Cliente** e 🟩 **Atendente**. Agregados: 🟧 Cliente, 🟧 Veículo e 🟧 **Ordem de Serviço**.
 
 | #   | Comando                           | Evento                      | Onde no código                                                                   |
 | --- | --------------------------------- | --------------------------- | -------------------------------------------------------------------------------- |
-| 1   | 🟦 Identificar cliente (CPF/CNPJ) | 🟧 Cliente identificado     | `CreateServiceOrderUseCase` busca o cliente por documento (consulta, sem evento) |
-| 2   | 🟦 Cadastrar veículo              | 🟧 Veículo cadastrado       | `VehicleRegisteredEvent`, só quando a placa ainda não existe                     |
-| 3   | 🟦 Criar ordem de serviço         | 🟧 OS criada (**Recebida**) | `ServiceOrder.create` → `ServiceOrderCreatedEvent`                               |
-| 4   | 🟦 Adicionar serviço(s)           | 🟧 Serviço adicionado       | `ServiceOrder.addService` → `ServiceAddedEvent`                                  |
-| 5   | 🟦 Adicionar peça(s)              | 🟧 Peça adicionada          | `ServiceOrder.addPart` → `PartAddedEvent`                                        |
-| 6   | 🟦 Gerar orçamento                | 🟧 Orçamento gerado         | `ServiceOrder.sendBudget` → `BudgetGeneratedEvent`                               |
-| 7   | 🟦 Enviar orçamento ao cliente    | 🟧 Orçamento enviado        | o mesmo comando → `BudgetSentEvent`                                              |
-| 8   | 🟦 Aprovar orçamento              | 🟧 Orçamento aprovado       | `ServiceOrder.approveBudget` → `BudgetApprovedEvent`                             |
+| 1   | 🟦 Identificar cliente (CPF/CNPJ) | 🟨 Cliente identificado     | `CreateServiceOrderUseCase` busca o cliente por documento (consulta, sem evento) |
+| 2   | 🟦 Cadastrar veículo              | 🟨 Veículo cadastrado       | `VehicleRegisteredEvent`, só quando a placa ainda não existe                     |
+| 3   | 🟦 Criar ordem de serviço         | 🟨 OS criada (**Recebida**) | `ServiceOrder.create` → `ServiceOrderCreatedEvent`                               |
+| 4   | 🟦 Adicionar serviço(s)           | 🟨 Serviço adicionado       | `ServiceOrder.addService` → `ServiceAddedEvent`                                  |
+| 5   | 🟦 Adicionar peça(s)              | 🟨 Peça adicionada          | `ServiceOrder.addPart` → `PartAddedEvent`                                        |
+| 6   | 🟦 Gerar orçamento                | 🟨 Orçamento gerado         | `ServiceOrder.sendBudget` → `BudgetGeneratedEvent`                               |
+| 7   | 🟦 Enviar orçamento ao cliente    | 🟨 Orçamento enviado        | o mesmo comando → `BudgetSentEvent`                                              |
+| 8   | 🟦 Aprovar orçamento              | 🟨 Orçamento aprovado       | `ServiceOrder.approveBudget` → `BudgetApprovedEvent`                             |
 
-Políticas do quadro:
+Políticas:
 
 | Política                                         | Implementação                                                                                               |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
@@ -35,16 +35,16 @@ Políticas do quadro:
 
 ### 1.2 Acompanhamento da Ordem de Serviço
 
-O quadro lista os comandos e deixa os eventos em branco. Eles ficam assim:
+Comandos e eventos do acompanhamento:
 
 | Comando                         | Quem                                  | Evento                  | Status resultante          |
 | ------------------------------- | ------------------------------------- | ----------------------- | -------------------------- |
-| 🟦 Consultar status da OS (API) | 🟨 Cliente (sem login), 🟨 equipe     | — (consulta)            | —                          |
-| 🟦 Iniciar diagnóstico          | 🟨 Mecânico                           | 🟧 Diagnóstico iniciado | **Em diagnóstico**         |
-| 🟦 Iniciar execução             | 🟪 automático, ao aprovar o orçamento | 🟧 Execução iniciada    | **Em execução**            |
-| 🟦 Finalizar serviço            | 🟨 Mecânico                           | 🟧 Serviço finalizado   | **Finalizada**             |
-| 🟦 Entregar veículo             | 🟨 Atendente                          | 🟧 Veículo entregue     | **Entregue**               |
-| 🟦 Rejeitar orçamento           | 🟨 Atendente, pela decisão do cliente | 🟧 Orçamento rejeitado  | volta a **Em diagnóstico** |
+| 🟦 Consultar status da OS (API) | 🟩 Cliente (sem login), 🟩 equipe     | — (consulta)            | —                          |
+| 🟦 Iniciar diagnóstico          | 🟩 Mecânico                           | 🟨 Diagnóstico iniciado | **Em diagnóstico**         |
+| 🟦 Iniciar execução             | 🟪 automático, ao aprovar o orçamento | 🟨 Execução iniciada    | **Em execução**            |
+| 🟦 Finalizar serviço            | 🟩 Mecânico                           | 🟨 Serviço finalizado   | **Finalizada**             |
+| 🟦 Entregar veículo             | 🟩 Atendente                          | 🟨 Veículo entregue     | **Entregue**               |
+| 🟦 Rejeitar orçamento           | 🟩 Atendente, pela decisão do cliente | 🟨 Orçamento rejeitado  | volta a **Em diagnóstico** |
 
 Políticas de acompanhamento:
 

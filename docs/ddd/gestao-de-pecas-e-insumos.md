@@ -11,21 +11,21 @@ relação de cada elemento com o código. Termos em **negrito** estão definidos
 
 ## 1. Event Storming
 
-Legenda (cores do Event Storming): 🟨 ator · 🟦 comando · 🟧 evento de domínio · 🟪 política · 🟩 agregado.
+Legenda (cores do Event Storming): 🟩 ator · 🟦 comando · 🟨 evento de domínio · 🟪 política · 🟧 agregado.
 
-Todos os comandos atuam sobre um único agregado: 🟩 **Estoque da Peça** (`Part`).
+Todos os comandos atuam sobre um único agregado: 🟧 **Estoque da Peça** (`Part`).
 
 ### 1.1 Fluxos
 
 | Fluxo                | Gatilho                                                    | Comando              | Evento                          |
 | -------------------- | ---------------------------------------------------------- | -------------------- | ------------------------------- |
-| Cadastro             | 🟨 Administrador                                           | 🟦 Cadastrar Peça    | 🟧 Estoque inicial registrado   |
-| Entrada de peças     | 🟨 Administrador                                           | 🟦 Registrar Entrada | 🟧 Entrada de peça registrada   |
-| Ajuste manual        | 🟨 Administrador                                           | 🟦 Ajustar Estoque   | 🟧 Ajuste de estoque registrado |
-| Reserva na aprovação | 🟪 _Sempre que aprovar orçamento, reservar peças_          | 🟦 Reservar Peças    | 🟧 Peça reservada               |
-| Liberação da reserva | 🟪 _Sempre que cancelar/reprovar orçamento, liberar_       | 🟦 Liberar Reservas  | 🟧 Reserva liberada             |
-| Consumo na execução  | 🟪 _Sempre que concluir serviço, consumir peças_           | 🟦 Consumir Peças    | 🟧 Peça consumida               |
-| Alerta de reposição  | 🟪 _Sempre que o saldo for ≤ mínimo_ (após Peça consumida) | —                    | 🟧 Estoque mínimo atingido      |
+| Cadastro             | 🟩 Administrador                                           | 🟦 Cadastrar Peça    | 🟨 Estoque inicial registrado   |
+| Entrada de peças     | 🟩 Administrador                                           | 🟦 Registrar Entrada | 🟨 Entrada de peça registrada   |
+| Ajuste manual        | 🟩 Administrador                                           | 🟦 Ajustar Estoque   | 🟨 Ajuste de estoque registrado |
+| Reserva na aprovação | 🟪 _Sempre que aprovar orçamento, reservar peças_          | 🟦 Reservar Peças    | 🟨 Peça reservada               |
+| Liberação da reserva | 🟪 _Sempre que cancelar/reprovar orçamento, liberar_       | 🟦 Liberar Reservas  | 🟨 Reserva liberada             |
+| Consumo na execução  | 🟪 _Sempre que concluir serviço, consumir peças_           | 🟦 Consumir Peças    | 🟨 Peça consumida               |
+| Alerta de reposição  | 🟪 _Sempre que o saldo for ≤ mínimo_ (após Peça consumida) | —                    | 🟨 Estoque mínimo atingido      |
 
 Os eventos **Orçamento aprovado**, **Orçamento cancelado** e **Serviço concluído** pertencem ao contexto de
 Ordem de Serviço. Para este contexto eles são gatilhos externos: a Ordem de Serviço chama os casos de

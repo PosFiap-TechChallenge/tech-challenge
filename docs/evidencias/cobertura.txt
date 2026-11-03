@@ -1,0 +1,80 @@
+Evidência de cobertura de testes - Tech Challenge Fase 1
+Comando: pnpm exec vitest --run --coverage --coverage.reporter=text --coverage.reporter=text-summary
+Commit: d1cdad8 (main) | Data: 02/11/2026 | Node 22.22.2 | Resultado: sucesso (código de saída 0)
+O mínimo de 80% em src/domain e src/application é aplicado por vitest.config.ts.
+
+Test Files  73 passed (73)
+Tests  710 passed (710)
+
+% Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   83.88 |    68.81 |   83.63 |   83.98 |                   
+ ...se-cases/parts |   99.11 |    96.15 |     100 |   99.08 |                   
+  ...ItemsBatch.ts |   91.66 |       50 |     100 |    90.9 | 24                
+ ...service-orders |   99.15 |       96 |     100 |    99.1 |                   
+  ...derUseCase.ts |   91.66 |     87.5 |     100 |   91.66 | 39                
+ domain/aggregates |   98.98 |       94 |    99.3 |   98.94 |                   
+  Part.ts          |   98.92 |       95 |     100 |   98.92 | 90                
+  ServiceOrder.ts  |   99.19 |    93.33 |     100 |   99.11 | 380               
+  User.ts          |   95.45 |      100 |   92.85 |   95.45 | 89                
+ domain/entities   |   94.44 |       95 |   92.85 |   94.44 |                   
+  PartItem.ts      |      92 |     87.5 |   92.85 |      92 | 92,111            
+  ServiceItem.ts   |   96.55 |      100 |   92.85 |   96.55 | 79                
+ domain/shared     |     100 |    92.85 |     100 |     100 |                   
+  parseSchema.ts   |     100 |       90 |     100 |     100 | 21                
+ .../value-objects |   99.24 |    96.15 |   98.18 |   99.24 |                   
+  Money.ts         |     100 |    93.33 |     100 |     100 | 63                
+  TaxDocument.ts   |     100 |    94.44 |     100 |     100 | 48                
+  UserRole.ts      |   66.66 |      100 |       0 |   66.66 | 12                
+ ...cture/database |    37.5 |        0 |   22.22 |   46.15 |                   
+  ...UnitOfWork.ts |      50 |      100 |   33.33 |   66.66 | 15                
+  ...ionContext.ts |   27.27 |        0 |       0 |   33.33 | 13-35             
+ ...tabase/mappers |    3.12 |        0 |   68.18 |    3.12 |                   
+  ...enceMapper.ts |       0 |      100 |     100 |       0 | 6-10              
+  ...enceMapper.ts |       0 |      100 |     100 |       0 | 16-48             
+  ...enceMapper.ts |    5.55 |        0 |      30 |    5.55 | 22-100            
+  ...enceMapper.ts |       0 |      100 |     100 |       0 | 7-13              
+  ...enceMapper.ts |       0 |      100 |     100 |       0 | 6-10              
+  ...enceMapper.ts |       0 |      100 |     100 |       0 | 6-10              
+ ...e/repositories |   13.36 |        0 |    8.69 |    13.7 |                   
+  ...Repository.ts |   16.66 |        0 |      10 |   17.24 | 23-43,54-106      
+  ...Repository.ts |   10.41 |        0 |    5.55 |   10.86 | 26-48,60-177      
+  ...Repository.ts |    8.51 |        0 |    6.66 |    8.51 | 33-45,56-199      
+  ...Repository.ts |   16.66 |        0 |      10 |   17.24 | 22-42,53-99       
+  ...Repository.ts |   23.07 |        0 |      20 |   23.07 | 12,26-45          
+  ...Repository.ts |    14.7 |        0 |    9.09 |   15.15 | 24-53,64-117      
+ ...tabase/testing |       0 |      100 |       0 |       0 |                   
+  resetDatabase.ts |       0 |      100 |       0 |       0 | 5                 
+ infrastructure/di |    95.4 |        0 |   85.71 |    95.4 |                   
+  Container.ts     |   71.42 |        0 |   66.66 |   71.42 | 18-24             
+ ...astructure/env |      80 |       50 |     100 |      80 |                   
+  Env.ts           |      80 |       50 |     100 |      80 | 24                
+ ...ructure/events |     100 |    66.66 |     100 |     100 |                   
+  ...tPublisher.ts |     100 |    66.66 |     100 |     100 | 32                
+ ...tp/controllers |   74.03 |      100 |   65.57 |   74.03 |                   
+  ...Controller.ts |   33.33 |      100 |      25 |   33.33 | 26-48             
+  ...Controller.ts |      50 |      100 |      50 |      50 | 20-22             
+  ...Controller.ts |   26.66 |      100 |    12.5 |   26.66 | 49-107            
+  ...rderParams.ts |       0 |      100 |       0 |       0 | 9-15              
+  ...Controller.ts |   46.66 |      100 |    12.5 |   46.66 | 20-22,50-80       
+  ...Controller.ts |   33.33 |      100 |      50 |   33.33 | 19-24             
+ ...tp/middlewares |   56.14 |    51.35 |      75 |   56.14 |                   
+  errorHandler.ts  |   83.33 |       50 |     100 |   83.33 | 10-11,54          
+  validate.ts      |       0 |        0 |       0 |       0 | 30-68             
+ ...e/http/routing |   96.96 |    93.33 |     100 |   96.96 |                   
+  ...ontrollers.ts |   91.66 |       75 |     100 |   91.66 | 14                
+ ...ructure/logger |   77.77 |    66.66 |   66.66 |   77.77 |                   
+  Logger.ts        |   77.77 |    66.66 |   66.66 |   77.77 | 27-28             
+ ...ture/providers |   90.47 |    81.25 |     100 |   90.47 |                   
+  ...enProvider.ts |      95 |    83.33 |     100 |      95 | 87                
+  ...wordHasher.ts |   86.36 |       80 |     100 |   86.36 | 13-14,46          
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 83.88% ( 1614/1924 )
+Branches     : 68.81% ( 320/465 )
+Functions    : 83.63% ( 552/660 )
+Lines        : 83.98% ( 1584/1886 )
+================================================================================

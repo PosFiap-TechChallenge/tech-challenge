@@ -8,9 +8,6 @@ orçamento, aprovação pelo cliente e acompanhamento via API.
 
 Projeto da **Fase 1 do Tech Challenge — SOAT (Software Architecture), Pós-Tech FIAP**.
 
-> Marcadores `🔗 pendente` indicam links e conteúdos que serão preenchidos até a entrega final.
-> Procure por `TODO` no arquivo para encontrá-los.
-
 ---
 
 ## Sumário
@@ -107,8 +104,8 @@ revisar os itens. Diagrama completo em [Ordem de Serviço](docs/ddd/ordem-de-ser
 | Item                                      | Link                                                                                                                                                                                                     |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Repositório                               | https://github.com/PosFiap-TechChallenge/tech-challenge                                                                                                                                                  |
-| Branch e commit da entrega final          | 🔗 pendente <!-- TODO: branch e hash do commit avaliado -->                                                                                                                                              |
-| Vídeo da entrega (YouTube, público)       | 🔗 pendente <!-- TODO: link do vídeo -->                                                                                                                                                                 |
+| Branch e commit da entrega final          | Branch `main`; o hash do commit avaliado é informado no PDF de entrega                                                                                                                                   |
+| Vídeo da entrega (YouTube, público)       | https://www.youtube.com/watch?v=oLUpgcCgDWs                                                                                                                                                              |
 | Documentação DDD (Miro)                   | [Board no Miro](https://miro.com/app/board/uXjVMfgUZMI=/?share_link_id=586687138595)                                                                                                                     |
 | Documentação DDD exportada no repositório | [`docs/ddd/`](docs/ddd/) — ver [seção 7](#7-documentação-ddd)                                                                                                                                            |
 | Relatório de análise de vulnerabilidades  | [`docs/security/vulnerability-report.md`](docs/security/vulnerability-report.md)                                                                                                                         |
